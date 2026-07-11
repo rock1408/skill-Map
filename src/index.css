@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-brand-bg: #09090b;
+  --color-brand-surface: rgba(255, 255, 255, 0.05);
+  --color-brand-surface2: rgba(255, 255, 255, 0.1);
+  --color-brand-primary: #6366f1; /* Indigo-500 */
+  --color-brand-secondary: #34d399; /* Emerald-400 */
+  --color-brand-accent: #a855f7; /* Purple-500 */
+  --color-brand-warning: #fbbf24; /* Amber-400 */
+  --color-brand-success: #34d399;
+  --color-brand-muted: #71717a; /* Zinc-400 */
+  --color-brand-body: #d4d4d8; /* Zinc-300 */
+  --color-brand-white: #fafafa; /* Zinc-50 */
+}
+
+/* Custom styles */
+body {
+  background-color: #09090b;
+  color: #d4d4d8;
+  font-family: var(--font-sans);
+}
+
+/* Apply Frosted Glass backdrop blurs to brand surfaces globally */
+.bg-brand-surface {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.bg-brand-surface2 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #18181b;
+}
+::-webkit-scrollbar-thumb {
+  background: #6366f1;
+  border-radius: 999px;
+}
+
+/* Pulsing and glow keyframes */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(108, 99, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(108, 99, 255, 0.7);
+  }
+}
+
+.pulse-glow {
+  animation: glow-pulse 3s infinite ease-in-out;
+}

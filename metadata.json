@@ -1,0 +1,6 @@
+{
+  "name": "SkillMap",
+  "description": "Free AI-powered career roadmaps with interactive mind-mapping visualizations. Map your skills to your dream career instantly.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
