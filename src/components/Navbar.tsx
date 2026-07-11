@@ -60,6 +60,14 @@ export default function Navbar({ user, onNavigate, currentPage, onLogout }: Navb
             Compare
           </button>
           <button
+            onClick={() => onNavigate("blog")}
+            className={`font-medium transition-colors cursor-pointer ${
+              currentPage === "blog" || currentPage === "blog-detail" ? "text-brand-secondary" : "text-brand-body hover:text-white"
+            }`}
+          >
+            Blog
+          </button>
+          <button
             onClick={() => onNavigate("about")}
             className={`font-medium transition-colors cursor-pointer ${
               currentPage === "about" ? "text-brand-secondary" : "text-brand-body hover:text-white"

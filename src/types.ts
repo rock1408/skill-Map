@@ -146,3 +146,27 @@ export interface SavedRoadmap {
   share_slug: string;
   view_count: number;
 }
+
+export interface CareerRole {
+  title: string;
+  industry: string;
+  industryId: string;
+  salaryRange: string;
+  demand: string;
+  timeEstimate: string;
+  skills: string[];
+  description: string;
+  difficulty: string;
+  avgSalary: number;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  date: string;
+  slug: string;
+  category: string;
+  content: string;
+}

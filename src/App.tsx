@@ -14,7 +14,9 @@ import RoadmapList from "./components/RoadmapList";
 import SalaryChart from "./components/SalaryChart";
 import ProjectProofModal from "./components/ProjectProofModal";
 import { User, Preferences, RoadmapData, SavedRoadmap } from "./types";
-import { CAREER_ROLES, FEATURED_EXAMPLES, INDUSTRIES, SKILLS_DATABASE } from "./data";
+import { CAREER_ROLES_150 as CAREER_ROLES, INDUSTRIES_15 as INDUSTRIES, slugify } from "./careersData";
+import { FEATURED_EXAMPLES, SKILLS_DATABASE } from "./data";
+import { BLOG_POSTS, BlogPost } from "./blogData";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>("landing");
@@ -101,16 +103,126 @@ export default function App() {
 
   // Sharing copy state
   const [copiedShare, setCopiedShare] = useState(false);
+  const [selectedBlogPost, setSelectedBlogPost] = useState<BlogPost | null>(null);
 
-  // Load user session on mount
+  // Unified client-side router & session loader
   useEffect(() => {
+    // 1. Load Session
     const savedUser = localStorage.getItem("skillmap_user");
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
       setUser(parsed);
       loadSavedMaps(parsed.id);
     }
+
+    // 2. URL Hydration & Routing
+    const handleUrlRouting = () => {
+      const path = window.location.pathname;
+      const searchParams = new URLSearchParams(window.location.search);
+      const roleParam = searchParams.get("role");
+
+      if (roleParam) {
+        const roleData = CAREER_ROLES.find(r => r.title.toLowerCase() === roleParam.toLowerCase() || slugify(r.title) === slugify(roleParam));
+        if (roleData) {
+          setSelectedCareers([roleData.title]);
+          setGeneratorStep(2); // Start flow directly
+          setCurrentPage("landing");
+          return;
+        }
+      }
+
+      if (path === "/" || path === "/index.html") {
+        setCurrentPage("landing");
+      } else if (path === "/explore") {
+        setCurrentPage("explore");
+      } else if (path === "/compare") {
+        setCurrentPage("compare");
+      } else if (path === "/examples") {
+        setCurrentPage("examples");
+      } else if (path === "/about") {
+        setCurrentPage("about");
+      } else if (path === "/contact") {
+        setCurrentPage("contact");
+      } else if (path === "/privacy-policy") {
+        setCurrentPage("privacy-policy");
+      } else if (path === "/terms-of-service") {
+        setCurrentPage("terms-of-service");
+      } else if (path === "/cookie-policy") {
+        setCurrentPage("cookie-policy");
+      } else if (path === "/blog") {
+        setCurrentPage("blog");
+      } else if (path.startsWith("/careers/")) {
+        const slug = path.replace("/careers/", "");
+        const matched = CAREER_ROLES.find(r => slugify(r.title) === slug);
+        if (matched) {
+          setPreviewRole(matched.title);
+          setCurrentPage("explore");
+        } else {
+          setCurrentPage("explore");
+        }
+      } else if (path.startsWith("/blog/")) {
+        const slug = path.replace("/blog/", "");
+        const matchedPost = BLOG_POSTS.find(p => p.slug === slug);
+        if (matchedPost) {
+          setSelectedBlogPost(matchedPost);
+          setCurrentPage("blog-detail");
+        } else {
+          setCurrentPage("blog");
+        }
+      } else if (path.startsWith("/share/")) {
+        const slug = path.replace("/share/", "");
+        if (slug) {
+          setIsGenerating(true);
+          fetch(`/api/load-roadmap/${slug}`)
+            .then((res) => {
+              if (!res.ok) throw new Error("Failed to load");
+              return res.json();
+            })
+            .then((data) => {
+              setActiveRoadmap(data.roadmapJson);
+              setActiveRoadmapId(data.share_slug || data.id);
+              setCompletedNodes([]);
+              setInProgressNodes([]);
+              setCurrentPage("roadmap");
+              setIsGenerating(false);
+            })
+            .catch((err) => {
+              console.error("Failed to load shared roadmap", err);
+              setIsGenerating(false);
+              setCurrentPage("landing");
+            });
+        }
+      }
+    };
+
+    handleUrlRouting();
+    window.addEventListener("popstate", handleUrlRouting);
+    return () => window.removeEventListener("popstate", handleUrlRouting);
   }, []);
+
+  // Custom client navigation helper to update address bar without full page reloads
+  const navigateTo = (page: string, urlPath?: string) => {
+    setCurrentPage(page);
+    if (urlPath) {
+      window.history.pushState({}, "", urlPath);
+    } else {
+      const pathsMap: Record<string, string> = {
+        landing: "/",
+        explore: "/explore",
+        compare: "/compare",
+        examples: "/examples",
+        about: "/about",
+        contact: "/contact",
+        "privacy-policy": "/privacy-policy",
+        "terms-of-service": "/terms-of-service",
+        "cookie-policy": "/cookie-policy",
+        blog: "/blog"
+      };
+      const path = pathsMap[page] || "/";
+      window.history.pushState({}, "", path);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const loadSavedMaps = async (userId: string) => {
     try {
@@ -262,7 +374,7 @@ export default function App() {
       <div className="relative z-10 w-full">
         <Navbar
           user={user}
-          onNavigate={setCurrentPage}
+          onNavigate={navigateTo}
           currentPage={currentPage}
           onLogout={handleLogout}
         />
@@ -446,7 +558,7 @@ export default function App() {
                         {ind.name}
                       </h4>
                       <p className="text-[11px] text-brand-muted mt-1 leading-relaxed">
-                        e.g. {ind.examples.join(", ")}
+                        e.g. {CAREER_ROLES.filter((r) => r.industryId === ind.id).slice(0, 3).map((r) => r.title).join(", ")}
                       </p>
                     </div>
                   </div>
@@ -1116,6 +1228,219 @@ export default function App() {
           </div>
         )}
 
+        {/* =======================================
+            PAGE: PRIVACY POLICY
+            ======================================= */}
+        {currentPage === "privacy-policy" && (
+          <div className="max-w-3xl mx-auto space-y-6 text-left animate-fade-in py-8">
+            <h2 className="font-display font-extrabold text-3xl text-white">Privacy Policy</h2>
+            <p className="text-xs text-brand-muted font-mono uppercase tracking-wider">Last updated: July 11, 2026</p>
+            
+            <div className="space-y-4 text-brand-body text-sm leading-relaxed">
+              <p>At SkillMap, accessible from https://skillmapnew.vercel.app, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by SkillMap and how we use it.</p>
+              
+              <h3 className="font-display font-bold text-lg text-white mt-6">Consent</h3>
+              <p>By using our website, you hereby consent to our Privacy Policy and agree to its terms.</p>
+
+              <h3 className="font-display font-bold text-lg text-white mt-6">Google AdSense & DoubleClick Cookie</h3>
+              <p>Google is one of the third-party vendors on our site. It also uses cookies, known as DART cookies, to serve ads to our site visitors based upon their visit to our site and other sites on the internet. However, visitors may choose to decline the use of DART cookies by visiting the Google ad and content network Privacy Policy at the following URL: <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" className="text-brand-secondary underline">https://policies.google.com/technologies/ads</a></p>
+
+              <h3 className="font-display font-bold text-lg text-white mt-6">Our Advertising Partners</h3>
+              <p>Some of the advertisers on our site may use cookies and web beacons. Our advertising partners include Google AdSense. Each of our advertising partners has their own Privacy Policy for their policies on user data.</p>
+
+              <h3 className="font-display font-bold text-lg text-white mt-6">Log Files & Local Storage</h3>
+              <p>SkillMap follows a standard procedure of using log files. These files log visitors when they visit websites. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable. Additionally, we use local browser storage to save your skills preferences and roadmap milestones locally.</p>
+
+              <h3 className="font-display font-bold text-lg text-white mt-6">CCPA Privacy Rights & GDPR Data Protection</h3>
+              <p>We want to make sure you are fully aware of all of your data protection rights. Every user is entitled to request copies of their personal data, rectify any inaccurate information, or request that we erase your saved roadmaps.</p>
+            </div>
+          </div>
+        )}
+
+        {/* =======================================
+            PAGE: TERMS OF SERVICE
+            ======================================= */}
+        {currentPage === "terms-of-service" && (
+          <div className="max-w-3xl mx-auto space-y-6 text-left animate-fade-in py-8">
+            <h2 className="font-display font-extrabold text-3xl text-white">Terms of Service</h2>
+            <p className="text-xs text-brand-muted font-mono uppercase tracking-wider">Last updated: July 11, 2026</p>
+            
+            <div className="space-y-4 text-brand-body text-sm leading-relaxed">
+              <p>Welcome to SkillMap! These terms and conditions outline the rules and regulations for the use of SkillMap's Website, located at https://skillmapnew.vercel.app.</p>
+              
+              <h3 className="font-display font-bold text-lg text-white mt-6">License & Fair Use</h3>
+              <p>Unless otherwise stated, SkillMap and/or its licensors own the intellectual property rights for all material on SkillMap. All intellectual property rights are reserved. You may access this from SkillMap for your own personal use subjected to restrictions set in these terms and conditions.</p>
+              <p>You must not: republish material from SkillMap, sell, rent or sub-license material, or reproduce or copy material for commercial use.</p>
+
+              <h3 className="font-display font-bold text-lg text-white mt-6">Disclaimer of Warranties</h3>
+              <p>To the maximum extent permitted by applicable law, we exclude all representations, warranties and conditions relating to our website and the use of this website. All career path estimates, roadmap schedules, salary bands, and curriculum structures are estimates provided for vocational planning only and do not guarantee hiring outcomes.</p>
+            </div>
+          </div>
+        )}
+
+        {/* =======================================
+            PAGE: COOKIE POLICY
+            ======================================= */}
+        {currentPage === "cookie-policy" && (
+          <div className="max-w-3xl mx-auto space-y-6 text-left animate-fade-in py-8">
+            <h2 className="font-display font-extrabold text-3xl text-white">Cookie Policy</h2>
+            <p className="text-xs text-brand-muted font-mono uppercase tracking-wider">Last updated: July 11, 2026</p>
+            
+            <div className="space-y-4 text-brand-body text-sm leading-relaxed">
+              <p>This is the Cookie Policy for SkillMap, accessible from https://skillmapnew.vercel.app.</p>
+              
+              <h3 className="font-display font-bold text-lg text-white mt-6">What Are Cookies</h3>
+              <p>As is common practice with almost all professional websites this site uses cookies, which are tiny files that are downloaded to your computer, to improve your experience. This page describes what information they gather, how we use them and why we sometimes need to store these cookies.</p>
+
+              <h3 className="font-display font-bold text-lg text-white mt-6">How We Use Cookies</h3>
+              <p>We use cookies for a variety of reasons detailed below. Unfortunately in most cases there are no industry standard options for disabling cookies without completely disabling the functionality and features they add to this site. It is recommended that you leave on all cookies if you are not sure whether you need them or not.</p>
+
+              <h3 className="font-display font-bold text-lg text-white mt-6">Third Party Cookies</h3>
+              <p>In some special cases we also use cookies provided by trusted third parties. The following section details which third party cookies you might encounter through this site:</p>
+              <ul>
+                <li><strong>Google AdSense:</strong> The Google AdSense service we use to serve advertising uses a DoubleClick cookie to serve more relevant ads across the web and limit the number of times that a given ad is shown to you.</li>
+                <li><strong>Local Storage State:</strong> We use local storage browser structures to cache user input selections, so your skills inputs and picker targets persist on reload.</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* =======================================
+            PAGE: CONTACT
+            ======================================= */}
+        {currentPage === "contact" && (
+          <div className="max-w-xl mx-auto space-y-8 text-left animate-fade-in py-8">
+            <div className="space-y-2 text-center">
+              <h2 className="font-display font-extrabold text-3xl text-white">Contact Our Team</h2>
+              <p className="text-sm text-brand-muted max-w-md mx-auto">
+                Have questions, partnership offers, or feedback? Send us a direct query.
+              </p>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              alert("Thank you! Your message has been simulated successfully. We will get back to you within 24 hours.");
+              navigateTo("landing");
+            }} className="p-6 bg-brand-surface border border-white/8 rounded-3xl space-y-4 shadow-xl">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono font-bold text-brand-muted uppercase">Your Name</label>
+                <input required type="text" className="w-full px-3.5 py-2.5 bg-brand-surface2 border border-white/8 rounded-xl focus:border-brand-primary outline-none text-white text-sm" placeholder="John Doe" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono font-bold text-brand-muted uppercase">Email Address</label>
+                <input required type="email" className="w-full px-3.5 py-2.5 bg-brand-surface2 border border-white/8 rounded-xl focus:border-brand-primary outline-none text-white text-sm" placeholder="you@example.com" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono font-bold text-brand-muted uppercase">Message Content</label>
+                <textarea required rows={4} className="w-full px-3.5 py-2.5 bg-brand-surface2 border border-white/8 rounded-xl focus:border-brand-primary outline-none text-white text-sm" placeholder="Describe your inquiry..." />
+              </div>
+              <button type="submit" className="w-full py-3 bg-gradient-to-r from-brand-primary to-brand-secondary text-brand-bg font-bold rounded-xl text-sm hover:brightness-110 cursor-pointer transition-all shadow-lg">
+                Submit Message
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* =======================================
+            PAGE: BLOG LISTING
+            ======================================= */}
+        {currentPage === "blog" && (
+          <div className="space-y-8 text-left animate-fade-in py-6">
+            <div className="space-y-2">
+              <h2 className="font-display font-extrabold text-3xl text-white tracking-tight">The Career Compass Blog</h2>
+              <p className="text-brand-muted text-sm max-w-xl">
+                Expert insights, tutorials, and templates covering resume-building, technical portfolios, and industry transition guidelines.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {BLOG_POSTS.map((post) => (
+                <div
+                  key={post.id}
+                  onClick={() => {
+                    setSelectedBlogPost(post);
+                    navigateTo("blog-detail", `/blog/${post.slug}`);
+                  }}
+                  className="p-6 bg-brand-surface border border-white/5 hover:border-brand-primary/40 hover:scale-[1.01] rounded-2xl flex flex-col justify-between h-[250px] group transition-all cursor-pointer"
+                >
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-mono text-brand-muted">
+                      <span className="bg-brand-primary/10 border border-brand-primary/20 text-brand-primary-light px-2 py-0.5 rounded-full font-bold">{post.category}</span>
+                      <span>{post.date}</span>
+                    </div>
+                    <h4 className="font-display font-bold text-lg text-white leading-tight group-hover:text-brand-secondary transition-colors">
+                      {post.title}
+                    </h4>
+                    <p className="text-xs text-brand-muted line-clamp-3 leading-relaxed">
+                      {post.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs font-mono font-bold text-brand-primary group-hover:text-brand-secondary transition-all">
+                    <span>By {post.author.split(" ")[0]}</span>
+                    <span>Read Article →</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* =======================================
+            PAGE: BLOG DETAIL
+            ======================================= */}
+        {currentPage === "blog-detail" && selectedBlogPost && (
+          <div className="max-w-3xl mx-auto text-left animate-fade-in py-6 space-y-8">
+            <button
+              onClick={() => navigateTo("blog")}
+              className="text-xs font-mono font-bold text-brand-muted hover:text-white flex items-center gap-1 cursor-pointer"
+            >
+              ← BACK TO BLOG DIRECTORY
+            </button>
+            
+            <div className="space-y-4 pb-6 border-b border-white/5">
+              <span className="bg-brand-secondary/10 border border-brand-secondary/20 text-brand-secondary text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide">
+                {selectedBlogPost.category}
+              </span>
+              <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight leading-tight">
+                {selectedBlogPost.title}
+              </h1>
+              <div className="flex items-center gap-2 text-xs font-mono text-brand-muted">
+                <span>By <strong>{selectedBlogPost.author}</strong></span>
+                <span>•</span>
+                <span>Published on {selectedBlogPost.date}</span>
+              </div>
+            </div>
+
+            {/* Render article body */}
+            <div
+              className="prose prose-invert max-w-none text-brand-body text-sm leading-relaxed space-y-6"
+              dangerouslySetInnerHTML={{ __html: selectedBlogPost.content }}
+            />
+
+            {/* CTA Mind Map Generation Card */}
+            <div className="p-8 bg-gradient-to-br from-brand-primary/15 via-brand-secondary/5 to-transparent border border-brand-primary/30 rounded-3xl text-center space-y-5 mt-12">
+              <h3 className="font-display font-bold text-xl text-white">
+                Ready to Accelerate Your Career Change?
+              </h3>
+              <p className="text-xs text-brand-muted max-w-xl mx-auto leading-relaxed">
+                Take what you've learned and build a personalized visual roadmap with SkillMap AI. Instantly identify your skill gaps and unlock recommended free resources.
+              </p>
+              <button
+                onClick={() => {
+                  setInputSkills([]);
+                  setSelectedCareers([]);
+                  setGeneratorStep(1);
+                  navigateTo("landing");
+                }}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-brand-bg font-bold hover:brightness-110 shadow-lg shadow-brand-primary/15 transition-all cursor-pointer text-sm"
+              >
+                Generate My Custom SkillMap Free
+              </button>
+            </div>
+          </div>
+        )}
+
       </main>
 
       {/* 3. Global Footer */}
@@ -1130,11 +1455,16 @@ export default function App() {
             </p>
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-6 text-brand-muted font-medium">
-            <button onClick={() => setCurrentPage("explore")} className="hover:text-white transition-colors">Explore</button>
-            <button onClick={() => setCurrentPage("examples")} className="hover:text-white transition-colors">Examples</button>
-            <button onClick={() => setCurrentPage("compare")} className="hover:text-white transition-colors">Compare</button>
-            <button onClick={() => setCurrentPage("about")} className="hover:text-white transition-colors">About</button>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-brand-muted font-medium">
+            <button onClick={() => navigateTo("explore")} className="hover:text-white transition-colors cursor-pointer">Explore</button>
+            <button onClick={() => navigateTo("examples")} className="hover:text-white transition-colors cursor-pointer">Examples</button>
+            <button onClick={() => navigateTo("compare")} className="hover:text-white transition-colors cursor-pointer">Compare</button>
+            <button onClick={() => navigateTo("blog")} className="hover:text-white transition-colors cursor-pointer">Blog</button>
+            <button onClick={() => navigateTo("about")} className="hover:text-white transition-colors cursor-pointer">About</button>
+            <button onClick={() => navigateTo("contact")} className="hover:text-white transition-colors cursor-pointer">Contact</button>
+            <button onClick={() => navigateTo("privacy-policy")} className="hover:text-white transition-colors cursor-pointer">Privacy Policy</button>
+            <button onClick={() => navigateTo("terms-of-service")} className="hover:text-white transition-colors cursor-pointer">Terms</button>
+            <button onClick={() => navigateTo("cookie-policy")} className="hover:text-white transition-colors cursor-pointer">Cookies</button>
           </div>
 
           <div className="text-brand-muted text-[11px] text-center sm:text-right">

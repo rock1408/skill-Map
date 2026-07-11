@@ -4,6 +4,8 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import { CAREER_ROLES_150, slugify, INDUSTRIES_15 } from "./src/careersData";
+import { BLOG_POSTS } from "./src/blogData";
 
 dotenv.config();
 
@@ -668,6 +670,489 @@ app.get("/api/saved-roadmaps/:userId", (req, res) => {
   const maps = db.roadmaps.filter((r: any) => r.userId === userId);
   res.json(maps);
 });
+
+// --- BEGIN SEO & ADSENSE PRERENDER ENGINE ---
+
+function generateCareerPreRender(role: any) {
+  const slug = slugify(role.title);
+  const related = CAREER_ROLES_150
+    .filter(r => r.industryId === role.industryId && r.title !== role.title)
+    .slice(0, 4);
+  
+  return `
+    <article>
+      <h1>How to Become a ${role.title}</h1>
+      <p>Discover the comprehensive, step-by-step career transition guide to become a professional <strong>${role.title}</strong> in the <strong>${role.industry}</strong> industry. Whether you are switching careers with no prior experience or leveling up your existing skill set, this guide outlines everything you need to succeed.</p>
+      
+      <section>
+        <h2>Salary Range and Market Demand</h2>
+        <p>The average salary for a ${role.title} is approximately <strong>$${role.avgSalary.toLocaleString()}</strong> per year, with typical salary bands ranging from <strong>${role.salaryRange}</strong>. Due to rapid industry shifts, market demand for this role is currently rated as <strong>${role.demand}</strong>, offering long-term stability and extensive growth potential.</p>
+      </section>
+
+      <section>
+        <h2>Day-in-the-Life & Key Responsibilities</h2>
+        <p>${role.description}</p>
+        <p>On a daily basis, a professional in this role collaborates with cross-functional stakeholders, runs technical diagnostics or planning loops, reviews performance metrics, and implements solutions using specialized industry tools.</p>
+      </section>
+
+      <section>
+        <h2>Core Skills & Competencies Required</h2>
+        <p>To successfully transition into this field, you must master the following core competencies:</p>
+        <ul>
+          ${role.skills.map((s: string) => `<li><strong>${s}:</strong> Essential for daily operations and completing core project deliverables.</li>`).join("")}
+        </ul>
+      </section>
+      
+      <section>
+        <h2>Step-by-Step Learning and Career Transition Plan</h2>
+        <p>Our recommended learning schedule spans approximately <strong>${role.timeEstimate}</strong> of dedicated study, structured into three progressive phases:</p>
+        
+        <h3>Phase 1: Foundation Building</h3>
+        <p>Focus on mastering core terminology, visual frameworks, and basic tools. Dedicate 10-15 hours per week to understand the basic mechanics of the discipline.</p>
+        
+        <h3>Phase 2: Intermediate Scaling & Projects</h3>
+        <p>Incorporate more complex systems, databases, or project management methodologies. Focus on building real-world projects that demonstrate your practical capacity to solve problems.</p>
+        
+        <h3>Phase 3: Deployment, Portfolios, & Job Readiness</h3>
+        <p>Compile your completed projects into a structured, responsive personal portfolio. Undertake mock interviews, refine your resume to highlight transferable skills, and start networking in specialized communities.</p>
+      </section>
+
+      <section>
+        <h2>Frequently Asked Questions</h2>
+        <div>
+          <h3>How long does it take to become a ${role.title}?</h3>
+          <p>Typically, it takes about ${role.timeEstimate} of focused, daily study (around 15-20 hours per week) to build a competitive entry-level portfolio.</p>
+        </div>
+        <div>
+          <h3>Do I need a college degree to work as a ${role.title}?</h3>
+          <p>No. Most modern employers in this field prioritize verified skills and a strong practical portfolio over traditional academic degrees.</p>
+        </div>
+        <div>
+          <h3>What are the most critical skills to learn first?</h3>
+          <p>The most critical starting skills are: ${role.skills.slice(0, 3).join(", ")}.</p>
+        </div>
+      </section>
+      
+      <section>
+        <h2>Related Career Fields</h2>
+        <ul>
+          ${related.map(r => `<li><a href="/careers/${slugify(r.title)}">${r.title}</a> - Average Salary: $${r.avgSalary.toLocaleString()}</li>`).join("")}
+        </ul>
+      </section>
+      
+      <p><a href="/?role=${encodeURIComponent(role.title)}">Click here to generate a fully customized, AI-powered interactive SkillMap mind-map for ${role.title}!</a></p>
+    </article>
+  `;
+}
+
+function generateCareerSchema(role: any) {
+  const slug = slugify(role.title);
+  const url = `https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/careers/${slug}`;
+  
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${url}#webpage`,
+        "url": url,
+        "name": `How to Become a ${role.title} | Career Roadmap, Salary & Skills | SkillMap`,
+        "description": `Learn how to become a ${role.title}. Discover average salaries ($${role.avgSalary}), market demand, and expected preparation timelines.`
+      },
+      {
+        "@type": "HowTo",
+        "name": `How to Become a ${role.title}`,
+        "estimatedCost": {
+          "@type": "MonetaryAmount",
+          "currency": "USD",
+          "value": "0"
+        },
+        "totalTime": `P${role.timeEstimate.includes("10") ? "10M" : "6M"}`,
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Phase 1: Foundations",
+            "text": `Master core terminologies and initial concepts of ${role.title}.`
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Phase 2: Projects & Portfolios",
+            "text": "Build practical projects solving actual business challenges."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Phase 3: Job Application & Verification",
+            "text": "Optimize your resume, prepare mock interviews, and begin networking."
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": `How long does it take to become a ${role.title}?`,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": `Typically, it takes about ${role.timeEstimate} of focused, daily study to build a competitive portfolio.`
+            }
+          },
+          {
+            "@type": "Question",
+            "name": `Do I need a college degree to work as a ${role.title}?`,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Most modern employers in this field prioritize verified skills and a strong practical portfolio over traditional academic degrees."
+            }
+          }
+        ]
+      }
+    ]
+  });
+}
+
+function generateBlogPreRender(post: any) {
+  return `
+    <article>
+      <h1>${post.title}</h1>
+      <p>Written by <strong>${post.author}</strong> on <strong>${post.date}</strong> in <strong>${post.category}</strong></p>
+      <hr />
+      <div class="blog-body-content">
+        ${post.content}
+      </div>
+      <hr />
+      <p><a href="/explore">Explore over 150+ interactive career paths on SkillMap!</a></p>
+    </article>
+  `;
+}
+
+function generateBlogSchema(post: any) {
+  const url = `https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/blog/${post.slug}`;
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": url
+    },
+    "headline": post.title,
+    "description": post.description,
+    "datePublished": "2026-07-10T12:00:00Z",
+    "author": {
+      "@type": "Person",
+      "name": post.author
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SkillMap",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/logo-assets.png"
+      }
+    }
+  });
+}
+
+function injectSEO(html: string, seo: {
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  ogType?: string;
+  ogImage?: string;
+  schemaJson?: string;
+  extraContent?: string;
+}) {
+  let modified = html;
+  
+  // Replace title
+  if (modified.includes("<title>")) {
+    modified = modified.replace(/<title>.*?<\/title>/gi, `<title>${seo.title}</title>`);
+  } else {
+    modified = modified.replace("<head>", `<head><title>${seo.title}</title>`);
+  }
+
+  // Inject meta tags
+  const metaTags = `
+    <meta name="description" content="${seo.description.replace(/"/g, '&quot;')}" />
+    <link rel="canonical" href="${seo.canonicalUrl}" />
+    <meta property="og:title" content="${seo.title.replace(/"/g, '&quot;')}" />
+    <meta property="og:description" content="${seo.description.replace(/"/g, '&quot;')}" />
+    <meta property="og:url" content="${seo.canonicalUrl}" />
+    <meta property="og:type" content="${seo.ogType || 'website'}" />
+    <meta property="og:image" content="${seo.ogImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop'}" />
+    <meta property="og:site_name" content="SkillMap" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${seo.title.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:description" content="${seo.description.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:image" content="${seo.ogImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop'}" />
+    ${seo.schemaJson ? `<script type="application/ld+json">${seo.schemaJson}</script>` : ''}
+  `;
+
+  modified = modified.replace("</head>", `${metaTags}\n</head>`);
+
+  if (seo.extraContent) {
+    const crawlerContent = `
+      <div id="seo-crawler-content" style="display: none; visibility: hidden;" aria-hidden="true">
+        ${seo.extraContent}
+      </div>
+    `;
+    modified = modified.replace('<div id="root">', `<div id="root">\n${crawlerContent}`);
+  }
+
+  return modified;
+}
+
+function serveSEOPage(req: express.Request, res: express.Response, seoData: {
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  ogType?: string;
+  ogImage?: string;
+  schemaJson?: string;
+  extraContent?: string;
+}) {
+  const isProd = process.env.NODE_ENV === "production";
+  const templatePath = isProd 
+    ? path.join(process.cwd(), "dist", "index.html")
+    : path.join(process.cwd(), "index.html");
+
+  if (fs.existsSync(templatePath)) {
+    let html = fs.readFileSync(templatePath, "utf-8");
+    
+    // In dev, inject Vite client scripts
+    if (!isProd && !html.includes("/src/main.tsx")) {
+      html = html.replace("</body>", `<script type="module" src="/src/main.tsx"></script>\n</body>`);
+    }
+
+    const modified = injectSEO(html, seoData);
+    return res.send(modified);
+  } else {
+    return res.send(`<!DOCTYPE html><html lang="en"><head><title>${seoData.title}</title><meta name="description" content="${seoData.description}" /></head><body><div id="root"><h1>${seoData.title}</h1>${seoData.extraContent || ""}</div></body></html>`);
+  }
+}
+
+// --- XML SITEMAP & ROBOTS.TXT ENDPOINTS ---
+
+app.get("/sitemap.xml", (req, res) => {
+  res.header("Content-Type", "application/xml");
+  const baseUrl = "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app";
+  
+  const staticPages = [
+    "",
+    "explore",
+    "compare",
+    "examples",
+    "about",
+    "contact",
+    "privacy-policy",
+    "terms-of-service",
+    "cookie-policy"
+  ];
+  
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  
+  staticPages.forEach(p => {
+    xml += `  <url>\n    <loc>${baseUrl}/${p}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${p === "" ? "1.0" : "0.8"}</priority>\n  </url>\n`;
+  });
+  
+  CAREER_ROLES_150.forEach(role => {
+    const slug = slugify(role.title);
+    xml += `  <url>\n    <loc>${baseUrl}/careers/${slug}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  });
+  
+  BLOG_POSTS.forEach(post => {
+    xml += `  <url>\n    <loc>${baseUrl}/blog/${post.slug}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+  });
+  
+  xml += `</urlset>`;
+  res.send(xml);
+});
+
+app.get("/robots.txt", (req, res) => {
+  res.header("Content-Type", "text/plain");
+  res.send(`User-agent: *
+Allow: /
+
+Sitemap: https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/sitemap.xml
+`);
+});
+
+// --- SEO ROUTE CONTROLLERS ---
+
+app.get("/explore", (req, res) => {
+  const canonicalUrl = "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/explore";
+  const directoryHtml = `
+    <h1>Explore High-Demand Careers & Skill Maps</h1>
+    <p>Browse our directory of over 150 professional career paths in 15 distinct sectors, fully calibrated with salary indices and learning requirements.</p>
+    <ul>
+      ${CAREER_ROLES_150.map(r => `<li><a href="/careers/${slugify(r.title)}">${r.title}</a> in <strong>${r.industry}</strong> (Average Salary: $${r.avgSalary.toLocaleString()}, Difficulty: ${r.difficulty})</li>`).join("")}
+    </ul>
+  `;
+  
+  serveSEOPage(req, res, {
+    title: "Explore 150+ Career Tracks & Roadmaps | SkillMap",
+    description: "Discover high-paying, high-demand careers across 15 industries. Evaluate average salaries, difficulties, and expected transition timeframes.",
+    canonicalUrl,
+    extraContent: directoryHtml
+  });
+});
+
+app.get("/compare", (req, res) => {
+  serveSEOPage(req, res, {
+    title: "Compare Career Paths & Salaries Side-by-Side | SkillMap",
+    description: "Directly compare multiple career pathways to evaluate prep times, salary ranges, learning difficulties, and required tool competencies.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/compare",
+    extraContent: `<h1>Compare Careers</h1><p>Compare salaries, prep timelines, and core skills requirements side-by-side to make your perfect career pivot decision.</p>`
+  });
+});
+
+app.get("/examples", (req, res) => {
+  serveSEOPage(req, res, {
+    title: "Success Career Pivot Roadmap Examples | SkillMap",
+    description: "Browse curated, pre-verified career transition pathways from zero experience to frontend developers and machine learning specialists.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/examples",
+    extraContent: `<h1>Success Story Gallery</h1><p>Learn how thousands of students leverage overlapping skill nodes to break into competitive technical, business, and trades spaces.</p>`
+  });
+});
+
+app.get("/about", (req, res) => {
+  serveSEOPage(req, res, {
+    title: "About SkillMap AI | Demographics of Modern Career Transitions",
+    description: "Learn about the mission behind SkillMap AI: enabling high-yield career pivots through verified visual skill paths and AI-powered guides.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/about",
+    extraContent: `
+      <h1>About Us</h1>
+      <p>SkillMap democratizes vocational development through beautiful, verified interactive maps. We help users target and build exactly what hiring managers demand.</p>
+    `
+  });
+});
+
+app.get("/contact", (req, res) => {
+  serveSEOPage(req, res, {
+    title: "Contact Support & Corporate Partnerships | SkillMap",
+    description: "Get in touch with SkillMap's user support, partnership directors, or administrative operations.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/contact",
+    extraContent: `<h1>Contact SkillMap</h1><p>Reach out to us via email at support@skillmap.ai for inquiries, suggestions, and partnership opportunities.</p>`
+  });
+});
+
+app.get("/privacy-policy", (req, res) => {
+  serveSEOPage(req, res, {
+    title: "Privacy Policy | SkillMap AdSense Compliance & Cookie Disclosures",
+    description: "Read the SkillMap privacy guidelines regarding user session security, local caches, and Google AdSense cookie utilization.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/privacy-policy",
+    extraContent: `
+      <h1>Privacy Policy</h1>
+      <p>This policy details our data tracking parameters. This site utilizes third-party advertising cookies via Google AdSense to serve personalized ads based on your web browsing history.</p>
+    `
+  });
+});
+
+app.get("/terms-of-service", (req, res) => {
+  serveSEOPage(req, res, {
+    title: "Terms of Service | SkillMap Platform Usage Policies",
+    description: "Read the official legal agreement governing user capabilities and roadmap generation rules.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/terms-of-service",
+    extraContent: `<h1>Terms of Service</h1><p>By using SkillMap, you agree to comply with our fair-use generation limits and user guidelines.</p>`
+  });
+});
+
+app.get("/cookie-policy", (req, res) => {
+  serveSEOPage(req, res, {
+    title: "Cookie Policy | Third-Party Tracking Controls | SkillMap",
+    description: "Learn how cookies and state tokens are utilized on SkillMap to provide optimal responsive services.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/cookie-policy",
+    extraContent: `<h1>Cookie Policy</h1><p>We use essential local state cookies and third-party advertising cookies via Google AdSense to serve target ads.</p>`
+  });
+});
+
+app.get("/careers/:slug", (req, res) => {
+  const { slug } = req.params;
+  const role = CAREER_ROLES_150.find(r => slugify(r.title) === slug);
+  
+  if (!role) {
+    return res.status(404).send(`<!DOCTYPE html><html><body><h1>Career Not Found</h1><p>Browse our <a href="/explore">directory</a> for high-demand tracks.</p></body></html>`);
+  }
+  
+  const title = `How to Become a ${role.title} | Career Roadmap & Salary | SkillMap`;
+  const description = `Learn how to become a ${role.title}. Discover average salaries ($${role.avgSalary.toLocaleString()}), prep timelines, skills, and daily responsibilities.`;
+  const canonicalUrl = `https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/careers/${slug}`;
+  
+  serveSEOPage(req, res, {
+    title,
+    description,
+    canonicalUrl,
+    schemaJson: generateCareerSchema(role),
+    extraContent: generateCareerPreRender(role)
+  });
+});
+
+app.get("/blog/:slug", (req, res) => {
+  const { slug } = req.params;
+  const post = BLOG_POSTS.find(p => p.slug === slug);
+  
+  if (!post) {
+    return res.status(404).send(`<!DOCTYPE html><html><body><h1>Article Not Found</h1><p>Read our latest releases on our <a href="/">homepage</a>.</p></body></html>`);
+  }
+  
+  serveSEOPage(req, res, {
+    title: `${post.title} | SkillMap Career Blog`,
+    description: post.description,
+    canonicalUrl: `https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/blog/${slug}`,
+    schemaJson: generateBlogSchema(post),
+    extraContent: generateBlogPreRender(post)
+  });
+});
+
+app.get("/share/:slug", (req, res) => {
+  const { slug } = req.params;
+  const db = readDB();
+  const mapObj = db.roadmaps.find((r: any) => r.share_slug === slug || r.id === slug);
+  
+  if (!mapObj) {
+    return res.status(404).send(`<!DOCTYPE html><html><body><h1>Shared Roadmap Not Found</h1><p>Create yours now on <a href="/">SkillMap</a>.</p></body></html>`);
+  }
+  
+  serveSEOPage(req, res, {
+    title: `Personalized ${mapObj.targetRole} Career SkillMap | Shared Roadmap`,
+    description: `Check out this custom-generated interactive roadmap outlining the optimal path to transition into a ${mapObj.targetRole}, featuring visual nodes and metrics.`,
+    canonicalUrl: `https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/share/${slug}`,
+    extraContent: `<h1>Shared ${mapObj.targetRole} Roadmap</h1><p>${mapObj.roadmapJson.summary || ''}</p>`
+  });
+});
+
+// App fallback for simple root URLs to serve optimized home meta
+app.get("/", (req, res, next) => {
+  // If request contains sub-assets (like /@vite/client or index.css), let Vite handle it
+  if (req.path !== "/" && req.path !== "/index.html") {
+    return next();
+  }
+  
+  const homeHtml = `
+    <h1>SkillMap AI | Personalized Interactive Career Roadmaps</h1>
+    <p>Empower your vocational development with AI-designed learning pathways. Assess overlapping competencies, design custom milestones, and verify project completions.</p>
+    <h2>Our Top Career Sectors</h2>
+    <ul>
+      ${INDUSTRIES_15.map(i => `<li>${i.icon} ${i.name} - Explore and build tailored paths.</li>`).join("")}
+    </ul>
+    <h2>Trending Roles</h2>
+    <ul>
+      <li>Frontend Developer - $108,000 average salary</li>
+      <li>Data Scientist - $125,000 average salary</li>
+      <li>Cloud Architect - $142,000 average salary</li>
+      <li>Cybersecurity Analyst - $110,000 average salary</li>
+    </ul>
+  `;
+  
+  serveSEOPage(req, res, {
+    title: "SkillMap AI | Personalized Interactive Career Roadmaps & Skill Gap Analysis",
+    description: "Map your skills to your dream career. Use our AI-powered roadmap builder to analyze skill gaps, explore career paths, and build interactive mind-maps with step-by-step milestones.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app",
+    extraContent: homeHtml
+  });
+});
+
+// --- END SEO & ADSENSE PRERENDER ENGINE ---
 
 // Serve frontend
 async function startServer() {
