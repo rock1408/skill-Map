@@ -1066,6 +1066,15 @@ app.get("/cookie-policy", (req, res) => {
   });
 });
 
+app.get(["/deals", "/recommended-courses"], (req, res) => {
+  serveSEOPage(req, res, {
+    title: "Special Partner Offers & Recommended Video Course Deals | SkillMap",
+    description: "Browse our hand-selected catalog of premium affiliate courses from industry-leading instructors on Udemy. Accelerate your career shift today with verified resources.",
+    canonicalUrl: "https://ais-pre-q2wy5kdffayqzvecdvmlvs-1031936644051.asia-southeast1.run.app/deals",
+    extraContent: `<h1>Udemy Curated Career Video Courses</h1><p>Skip months of endless searching. Enroll in professional courses for AWS, Full Stack Web Development, Azure, and Cybersecurity with exclusive partner discounts.</p>`
+  });
+});
+
 app.get("/careers/:slug", (req, res) => {
   const { slug } = req.params;
   const role = CAREER_ROLES_150.find(r => slugify(r.title) === slug);

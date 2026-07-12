@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { CheckCircle2, Circle, AlertTriangle, FileText, Video, ExternalLink, HelpCircle, ChevronDown, ChevronUp, Milestone, Compass, ShieldCheck, Users, Briefcase, Award, Upload, BookOpen, Globe, Wrench } from "lucide-react";
+import { CheckCircle2, Circle, AlertTriangle, FileText, Video, ExternalLink, HelpCircle, ChevronDown, ChevronUp, Milestone, Compass, ShieldCheck, Users, Briefcase, Award, Upload, BookOpen, Globe, Wrench, Star, Info } from "lucide-react";
 import { RoadmapData, Phase, FreeResource, PaidCourse, ProjectBrief, SkillGap, ExistingSkill } from "../types";
+import { matchCoursesToSkills, getCategoryGradients } from "../coursesData";
+import InlineUrgencyStrip from "./InlineUrgencyStrip";
 
 interface RoadmapListProps {
   roadmap: RoadmapData;
@@ -325,37 +327,100 @@ export default function RoadmapList({
                       {/* Paid courses */}
                       <div className="space-y-3.5">
                         <span className="block text-xs font-mono font-bold text-brand-primary-light uppercase tracking-wide">
-                          💎 Highly Rated Paid Alternatives (Affiliate Support)
+                          💎 Premium Partner Masterclasses (Sponsored)
                         </span>
                         <div className="space-y-3">
-                          {phase.paidCourses.map((course, idx) => (
-                            <a
-                              key={idx}
-                              href={course.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-3 bg-brand-surface rounded-xl border border-white/5 hover:border-brand-primary/30 transition-all flex items-start justify-between group cursor-pointer"
-                            >
-                              <div className="space-y-1">
-                                <span className="text-[9px] font-mono font-bold uppercase tracking-wide bg-brand-primary/10 text-brand-primary-light px-1.5 py-0.5 rounded border border-brand-primary/15">
-                                  {course.platform} • Affiliate
-                                </span>
-                                <h6 className="text-xs font-bold text-white leading-snug group-hover:text-brand-primary transition-colors mt-1.5">
-                                  {course.title}
-                                </h6>
-                                <span className="block text-[11px] text-brand-muted">
-                                  Instructor: {course.instructor} • Rating: ⭐ {course.rating} • Price: ${course.priceUSD}
-                                </span>
-                                <p className="text-[11px] text-brand-muted italic mt-0.5">
-                                  "{course.whyRecommended}"
-                                </p>
-                              </div>
-                              <ExternalLink size={13} className="text-brand-muted group-hover:text-white shrink-0 ml-2" />
-                            </a>
-                          ))}
+                          {(() => {
+                            const matchedUdemy = matchCoursesToSkills(phase.skills);
+                            if (matchedUdemy.length > 0) {
+                              return matchedUdemy.slice(0, 2).map((course) => (
+                                <a
+                                  key={course.id}
+                                  href={course.affiliateUrl}
+                                  target="_blank"
+                                  rel="noopener sponsored"
+                                  className="p-3 bg-brand-surface/70 border border-brand-primary/20 hover:border-brand-primary/50 hover:bg-brand-surface rounded-xl transition-all flex items-start justify-between group cursor-pointer text-left"
+                                >
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[9px] font-mono font-bold uppercase tracking-wide bg-brand-primary/10 text-brand-primary-light px-1.5 py-0.5 rounded border border-brand-primary/15">
+                                        Udemy • {course.badge}
+                                      </span>
+                                      <span className="text-[8px] font-mono text-brand-muted">
+                                        Sponsored
+                                      </span>
+                                    </div>
+                                    <h6 className="text-xs font-bold text-white leading-snug group-hover:text-brand-primary transition-colors mt-1.5">
+                                      {course.title}
+                                    </h6>
+                                    <div className="flex items-center gap-1.5 text-[10px] text-brand-muted font-mono mt-0.5">
+                                      {course.rating ? (
+                                        <>
+                                          <span className="text-yellow-500 flex items-center gap-0.5"><Star size={10} className="fill-yellow-500" /> {course.rating}</span>
+                                          <span>•</span>
+                                        </>
+                                      ) : (
+                                        <span className="italic">Rating pending verification</span>
+                                      )}
+                                      <span>{course.category}</span>
+                                    </div>
+                                    <p className="text-[11px] text-brand-muted/80 leading-relaxed mt-1">
+                                      Highly rated expert-led preparation curriculum covering: {course.tags.slice(0, 3).join(", ")}.
+                                    </p>
+                                  </div>
+                                  <ExternalLink size={13} className="text-brand-muted group-hover:text-white shrink-0 ml-2 mt-0.5" />
+                                </a>
+                              ));
+                            } else {
+                              return phase.paidCourses.map((course, idx) => (
+                                <a
+                                  key={idx}
+                                  href={course.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-3 bg-brand-surface rounded-xl border border-white/5 hover:border-brand-primary/30 transition-all flex items-start justify-between group cursor-pointer text-left"
+                                >
+                                  <div className="space-y-1">
+                                    <span className="text-[9px] font-mono font-bold uppercase tracking-wide bg-brand-primary/10 text-brand-primary-light px-1.5 py-0.5 rounded border border-brand-primary/15">
+                                      {course.platform} • Affiliate
+                                    </span>
+                                    <h6 className="text-xs font-bold text-white leading-snug group-hover:text-brand-primary transition-colors mt-1.5">
+                                      {course.title}
+                                    </h6>
+                                    <span className="block text-[11px] text-brand-muted">
+                                      Instructor: {course.instructor} • Rating: ⭐ {course.rating} • Price: ${course.priceUSD}
+                                    </span>
+                                    <p className="text-[11px] text-brand-muted italic mt-0.5">
+                                      "{course.whyRecommended}"
+                                    </p>
+                                  </div>
+                                  <ExternalLink size={13} className="text-brand-muted group-hover:text-white shrink-0 ml-2" />
+                                </a>
+                              ));
+                            }
+                          })()}
                         </div>
                       </div>
                     </div>
+
+                    {/* Inline Urgency strip contextually based on phase skills */}
+                    {(() => {
+                      const matchedCourses = matchCoursesToSkills(phase.skills);
+                      if (matchedCourses.length > 0) {
+                        const course = matchedCourses[0];
+                        return (
+                          <div className="mt-2">
+                            <InlineUrgencyStrip
+                              course={course}
+                              skillName={phase.skills[0] || course.tags[0]}
+                              roleName={roadmap.targetRole}
+                              patternType={((phase.phaseNumber || 1) % 4 + 1) as any}
+                            />
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
 
                     {/* Practice Portfolio Projects */}
                     <div className="pt-6 border-t border-white/5 space-y-4">

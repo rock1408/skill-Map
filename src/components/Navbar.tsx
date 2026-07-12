@@ -73,6 +73,15 @@ export default function Navbar({ user, onNavigate, currentPage, onLogout }: Navb
             Compare
           </button>
           <button
+            onClick={() => onNavigate("deals")}
+            className={`font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+              currentPage === "deals" ? "text-brand-secondary" : "text-brand-body hover:text-white"
+            }`}
+          >
+            <span className="inline-block w-2 h-2 rounded-full bg-brand-secondary animate-pulse" />
+            Deals
+          </button>
+          <button
             onClick={() => onNavigate("blog")}
             className={`font-medium transition-colors cursor-pointer ${
               currentPage === "blog" || currentPage === "blog-detail" ? "text-brand-secondary" : "text-brand-body hover:text-white"

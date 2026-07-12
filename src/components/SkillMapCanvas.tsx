@@ -21,6 +21,7 @@ interface MapNode {
   y: number;
   color: string;
   phaseIdx?: number;
+  angle?: number;
   details?: {
     description?: string;
     objectives?: string[];
@@ -38,6 +39,17 @@ interface MapEdge {
   type: "solid" | "dashed";
 }
 
+// Custom auxiliary React Flow 'nodeTypes' configuration to ensure compatibility with flow specs
+export const nodeTypes = {
+  customNode: ({ data }: { data: { label: string } }) => {
+    return (
+      <div className="p-3.5 rounded-xl border border-white/10 bg-brand-surface text-white min-w-[140px] text-center shadow-lg hover:border-brand-secondary/40 transition-colors">
+        <div className="font-semibold text-xs leading-normal break-words whitespace-normal">{data.label}</div>
+      </div>
+    );
+  }
+};
+
 export default function SkillMapCanvas({
   roadmap,
   completedNodes,
@@ -48,6 +60,7 @@ export default function SkillMapCanvas({
   onVerifySkill,
 }: SkillMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<"constellation" | "grid">("constellation");
   const [scale, setScale] = useState(1);
   const [translateX, setTranslateX] = useState(350);
   const [translateY, setTranslateY] = useState(250);
@@ -98,7 +111,7 @@ export default function SkillMapCanvas({
     roadmap.phases.forEach((phase, idx) => {
       // Calculate phase angle around center
       const angle = (idx * 2 * Math.PI) / phasesCount - Math.PI / 2;
-      const phaseRadius = 180;
+      const phaseRadius = 240;
       const px = phaseRadius * Math.cos(angle);
       const py = phaseRadius * Math.sin(angle);
 
@@ -112,6 +125,7 @@ export default function SkillMapCanvas({
         y: py,
         color: idx % 3 === 0 ? "#6366f1" : idx % 3 === 1 ? "#34d399" : "#fbbf24",
         phaseIdx: idx,
+        angle: angle,
         details: {
           description: phase.title,
           objectives: phase.objectives,
@@ -129,11 +143,11 @@ export default function SkillMapCanvas({
       // Calculate skills for this phase radiating further outward
       const skills = phase.skills || [];
       const skillCount = skills.length;
-      const childRadius = 110;
+      const childRadius = 150;
 
       skills.forEach((skillName, sIdx) => {
         // Space skill nodes in an arc radiating outward from the phase node
-        const fanAngle = Math.PI / 2.5; // arc range
+        const fanAngle = Math.min(Math.PI * 0.9, (skillCount * Math.PI) / 9 + Math.PI / 6);
         const startAngle = angle - fanAngle / 2;
         const sAngle = skillCount === 1 
           ? angle 
@@ -167,6 +181,7 @@ export default function SkillMapCanvas({
             ? "#f43f5e" 
             : "#71717a",
           phaseIdx: idx,
+          angle: sAngle,
           details: {
             description: `Core skill in ${phase.title.split(":")[0]}. Necessary to achieve professional proficiency.`,
             resources: phase.freeResources,
@@ -186,7 +201,7 @@ export default function SkillMapCanvas({
         const certId = `cert-${cIdx}`;
         // Place certs around top/sides
         const angle = -Math.PI / 4 - (cIdx * Math.PI) / 8;
-        const radius = 340;
+        const radius = 420;
         const cx = radius * Math.cos(angle);
         const cy = radius * Math.sin(angle);
 
@@ -198,6 +213,7 @@ export default function SkillMapCanvas({
           x: cx,
           y: cy,
           color: "#fbbf24",
+          angle: angle,
           details: {
             description: `Certification provided by ${cert.provider}. Exam cost: $${cert.examCostUSD}. Suggested preparation time: ${cert.prepWeeks} weeks.`,
             objectives: ["Prepare according to syllabus", "Take mock exam modules"]
@@ -276,35 +292,220 @@ export default function SkillMapCanvas({
   };
 
   return (
-    <div className="relative border border-white/5 bg-brand-bg rounded-2xl overflow-hidden h-[500px] flex flex-col justify-end select-none">
-      
-      {/* Zoom and recenter panel (bottom left) */}
-      <div className="absolute bottom-4 left-4 z-20 flex flex-col gap-2 bg-brand-surface/90 border border-white/10 rounded-xl p-2 backdrop-blur-md shadow-xl">
+    <div
+      id="skillmap-canvas-container"
+      className="relative border border-white/5 bg-brand-bg rounded-2xl overflow-hidden h-[600px] flex flex-col justify-end select-none"
+    >
+      {/* Layout Toggle (top right) */}
+      <div className="absolute top-4 right-4 z-30 flex bg-brand-surface/95 border border-white/10 rounded-xl p-1 backdrop-blur-md shadow-xl text-xs">
         <button
-          onClick={() => setScale(prev => Math.min(prev + 0.15, 3))}
-          title="Zoom In"
-          className="p-2 rounded-lg bg-brand-bg hover:bg-white/5 border border-white/5 hover:border-white/15 text-white transition-all cursor-pointer"
+          onClick={() => setViewMode("constellation")}
+          className={`px-3 py-1.5 rounded-lg font-bold font-sans transition-all cursor-pointer ${
+            viewMode === "constellation"
+              ? "bg-brand-secondary text-brand-bg shadow"
+              : "text-brand-muted hover:text-white"
+          }`}
         >
-          <ZoomIn size={16} />
+          Constellation Map
         </button>
         <button
-          onClick={() => setScale(prev => Math.max(prev - 0.15, 0.4))}
-          title="Zoom Out"
-          className="p-2 rounded-lg bg-brand-bg hover:bg-white/5 border border-white/5 hover:border-white/15 text-white transition-all cursor-pointer"
+          onClick={() => setViewMode("grid")}
+          className={`px-3 py-1.5 rounded-lg font-bold font-sans transition-all cursor-pointer ${
+            viewMode === "grid"
+              ? "bg-brand-secondary text-brand-bg shadow"
+              : "text-brand-muted hover:text-white"
+          }`}
         >
-          <ZoomOut size={16} />
-        </button>
-        <button
-          onClick={handleRecenter}
-          title="Recenter"
-          className="p-2 rounded-lg bg-brand-bg hover:bg-white/5 border border-white/5 hover:border-white/15 text-white transition-all cursor-pointer"
-        >
-          <Maximize size={16} />
+          Structured Flow Grid
         </button>
       </div>
 
-      {/* Main interactive canvas area */}
-      <div
+      {viewMode === "grid" ? (
+        <div className="w-full h-full overflow-y-auto p-6 pt-16 space-y-8 bg-brand-bg/95 text-left custom-scrollbar" style={{ contentVisibility: "auto" }}>
+          {/* Header */}
+          <div className="border-b border-white/5 pb-4">
+            <span className="text-[10px] font-mono uppercase font-bold text-brand-secondary tracking-wider bg-brand-secondary/10 px-2.5 py-1 rounded-full">
+              Structured Roadmap Flow
+            </span>
+            <h3 className="text-lg font-display font-bold text-white mt-2 leading-tight">
+              {roadmap.targetRole} Path
+            </h3>
+            <p className="text-xs text-brand-muted mt-1 leading-relaxed max-w-2xl">
+              {roadmap.summary}
+            </p>
+          </div>
+
+          {/* Central Target Card */}
+          <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-r from-brand-primary/10 via-brand-secondary/10 to-brand-primary/5 border border-white/10 text-center space-y-2">
+            <div className="w-12 h-12 rounded-full bg-brand-secondary/20 flex items-center justify-center border border-brand-secondary/40">
+              <span className="text-xl">🎯</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white uppercase tracking-wide">Target Role</h4>
+              <p className="text-base font-display font-black text-brand-secondary mt-0.5">{roadmap.targetRole}</p>
+            </div>
+          </div>
+
+          {/* Phases Grid */}
+          <div className="space-y-8">
+            {roadmap.phases.map((phase, idx) => {
+              const phaseNodeId = `phase-${idx}`;
+              const phaseNode = nodes.find(n => n.id === phaseNodeId);
+              const phaseSkills = nodes.filter(n => n.type === "skill" && n.phaseIdx === idx);
+
+              return (
+                <div key={idx} className="space-y-4">
+                  {/* Phase Header Card */}
+                  <div 
+                    onClick={() => {
+                      if (phaseNode) setSelectedNode(phaseNode);
+                    }}
+                    className="p-4 rounded-xl border border-white/10 bg-brand-surface2/80 hover:border-brand-secondary/50 hover:bg-brand-surface2 cursor-pointer transition-all flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: idx % 3 === 0 ? "#6366f1" : idx % 3 === 1 ? "#34d399" : "#fbbf24" }}>
+                        {idx + 1}
+                      </div>
+                      <div className="text-left">
+                        <span className="text-[9px] font-mono text-brand-muted uppercase tracking-wider">PHASE {idx + 1}</span>
+                        <h4 className="text-sm font-bold text-white leading-tight group-hover:text-brand-secondary transition-colors">{phase.title.split(":")[1] || phase.title}</h4>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-brand-muted bg-white/5 px-2 py-1 rounded">
+                        {phase.skills?.length || 0} Skills
+                      </span>
+                      <ArrowRight size={14} className="text-brand-muted group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+
+                  {/* Skills Grid for this Phase */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pl-4 border-l border-white/5">
+                    {phaseSkills.map((skill) => {
+                      const isCompleted = completedNodes.includes(skill.label);
+                      const isInProgress = inProgressNodes.includes(skill.label);
+                      const isCritical = skill.status === "critical";
+                      const isVerified = proofs?.some(p => p.skillName.toLowerCase() === skill.label.toLowerCase() && p.proofImage);
+
+                      let statusBg = "bg-white/5 border-white/5";
+                      let statusText = "Pending";
+                      let statusColor = "text-brand-muted";
+
+                      if (isCompleted) {
+                        statusBg = "bg-brand-secondary/10 border-brand-secondary/20";
+                        statusText = "Completed";
+                        statusColor = "text-brand-secondary";
+                      } else if (isInProgress) {
+                        statusBg = "bg-blue-500/10 border-blue-500/20";
+                        statusText = "In Progress";
+                        statusColor = "text-blue-400";
+                      } else if (isCritical) {
+                        statusBg = "bg-rose-500/10 border-rose-500/20";
+                        statusText = "Critical Gap";
+                        statusColor = "text-rose-400";
+                      }
+
+                      return (
+                        <div
+                          key={skill.id}
+                          onClick={() => setSelectedNode(skill)}
+                          className={`p-3 rounded-xl border hover:border-white/20 hover:bg-brand-surface2/60 cursor-pointer transition-all flex flex-col justify-between space-y-3 relative group ${statusBg}`}
+                        >
+                          {/* Top part: Label & status */}
+                          <div className="space-y-1.5 text-left">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${statusColor}`}>
+                                {statusText}
+                              </span>
+                              {isVerified && (
+                                <span className="text-[9px] font-mono text-brand-secondary bg-brand-secondary/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                  <ShieldCheck size={10} /> Proof
+                                </span>
+                              )}
+                            </div>
+                            <h5 className="text-xs font-bold text-white leading-normal break-words whitespace-normal group-hover:text-brand-secondary transition-colors">
+                              {skill.label}
+                            </h5>
+                          </div>
+
+                          {/* Action footer */}
+                          <div className="flex items-center justify-between text-[10px] text-brand-muted pt-2 border-t border-white/5">
+                            <span>Open Details</span>
+                            <ArrowRight size={11} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Certifications Section */}
+          {roadmap.certifications && roadmap.certifications.length > 0 && (
+            <div className="space-y-4 pt-4 border-t border-white/5">
+              <div className="flex items-center gap-2">
+                <Award className="text-yellow-500" size={18} />
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-display">Suggested Professional Certifications</h4>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {roadmap.certifications.map((cert, cIdx) => {
+                  const certNodeId = `cert-${cIdx}`;
+                  const certNode = nodes.find(n => n.id === certNodeId);
+
+                  return (
+                    <div
+                      key={cIdx}
+                      onClick={() => {
+                        if (certNode) setSelectedNode(certNode);
+                      }}
+                      className="p-3.5 rounded-xl border border-yellow-500/10 hover:border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10 cursor-pointer transition-all flex items-start gap-3 text-left group"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-yellow-500/15 flex items-center justify-center shrink-0 border border-yellow-500/30">
+                        <GraduationCap size={16} className="text-yellow-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[9px] font-mono text-yellow-400 font-bold uppercase tracking-wider">{cert.provider}</span>
+                        <h5 className="text-xs font-bold text-white leading-snug group-hover:text-yellow-400 transition-colors">{cert.name}</h5>
+                        <p className="text-[10px] text-brand-muted leading-relaxed">Prep: {cert.prepWeeks} weeks • Exam: ${cert.examCostUSD}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Zoom and recenter panel (bottom left) */}
+          <div className="absolute bottom-4 left-4 z-20 flex flex-col gap-2 bg-brand-surface/90 border border-white/10 rounded-xl p-2 backdrop-blur-md shadow-xl">
+            <button
+              onClick={() => setScale(prev => Math.min(prev + 0.15, 3))}
+              title="Zoom In"
+              className="p-2 rounded-lg bg-brand-bg hover:bg-white/5 border border-white/5 hover:border-white/15 text-white transition-all cursor-pointer"
+            >
+              <ZoomIn size={16} />
+            </button>
+            <button
+              onClick={() => setScale(prev => Math.max(prev - 0.15, 0.4))}
+              title="Zoom Out"
+              className="p-2 rounded-lg bg-brand-bg hover:bg-white/5 border border-white/5 hover:border-white/15 text-white transition-all cursor-pointer"
+            >
+              <ZoomOut size={16} />
+            </button>
+            <button
+              onClick={handleRecenter}
+              title="Recenter"
+              className="p-2 rounded-lg bg-brand-bg hover:bg-white/5 border border-white/5 hover:border-white/15 text-white transition-all cursor-pointer"
+            >
+              <Maximize size={16} />
+            </button>
+          </div>
+
+          {/* Main interactive canvas area */}
+          <div
         ref={containerRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -363,7 +564,6 @@ export default function SkillMapCanvas({
               // Custom styles based on node type
               let r = 18;
               let fontSize = "10px";
-              let textOffset = 24;
               let fillBg = "#18181b";
               let borderStroke = "rgba(255, 255, 255, 0.15)";
               let labelColor = "#d4d4d8";
@@ -452,18 +652,122 @@ export default function SkillMapCanvas({
                     <circle r="4" fill="#FFFFFF" />
                   )}
 
-                  {/* Node label text */}
-                  <text
-                    y={node.type === "central" || node.type === "phase" ? 0 : textOffset}
-                    dy={node.type === "central" || node.type === "phase" ? "0.3em" : "0"}
-                    textAnchor="middle"
-                    fill={labelColor}
-                    fontSize={fontSize}
-                    fontWeight={node.type === "central" || node.type === "phase" ? "bold" : "normal"}
-                    className="pointer-events-none font-display font-medium select-none shadow-sm transition-colors duration-200 group-hover:fill-white"
-                  >
-                    {node.label.length > 20 ? `${node.label.substring(0, 18)}...` : node.label}
-                  </text>
+                  {/* Node label text with halo effect and smart radial alignment */}
+                  {(() => {
+                    let textX = 0;
+                    let textY = 0;
+                    let textAnchor = "middle";
+                    let dy = "0.3em";
+
+                    if (node.type === "central") {
+                      textX = 0;
+                      textY = 40;
+                      textAnchor = "middle";
+                      dy = "0.3em";
+                    } else {
+                      const radialAngle = node.angle ?? 0;
+                      const textDist = r + 15; // spacing from node border
+
+                      textX = textDist * Math.cos(radialAngle);
+                      textY = textDist * Math.sin(radialAngle);
+
+                      const cosVal = Math.cos(radialAngle);
+                      if (cosVal > 0.3) {
+                        textAnchor = "start";
+                      } else if (cosVal < -0.3) {
+                        textAnchor = "end";
+                      } else {
+                        textAnchor = "middle";
+                      }
+
+                      const sinVal = Math.sin(radialAngle);
+                      if (sinVal > 0.5) {
+                        dy = "0.8em";
+                      } else if (sinVal < -0.5) {
+                        dy = "-0.3em";
+                      } else {
+                        dy = "0.3em";
+                      }
+                    }
+
+                    // Wrap long labels into beautiful multi-line labels
+                    const wrapText = (text: string, maxCharsPerLine = 15): string[] => {
+                      if (text.length <= maxCharsPerLine) return [text];
+                      const words = text.split(" ");
+                      const lines: string[] = [];
+                      let currentLine = "";
+                      
+                      words.forEach((word) => {
+                        if (currentLine === "") {
+                          currentLine = word;
+                        } else if ((currentLine + " " + word).length <= maxCharsPerLine) {
+                          currentLine += " " + word;
+                        } else {
+                          lines.push(currentLine);
+                          currentLine = word;
+                        }
+                      });
+                      if (currentLine !== "") {
+                        lines.push(currentLine);
+                      }
+                      if (lines.length > 2) {
+                        return [lines[0], lines[1] + "..."];
+                      }
+                      return lines;
+                    };
+
+                    const labelLines = wrapText(node.label);
+
+                    return (
+                      <>
+                        {/* Background halo for legibility against lines */}
+                        <text
+                          x={textX}
+                          y={textY}
+                          dy={dy}
+                          textAnchor={textAnchor}
+                          stroke="#0D0F14"
+                          strokeWidth={4}
+                          strokeLinejoin="round"
+                          fontSize={fontSize}
+                          fontWeight={node.type === "central" || node.type === "phase" ? "bold" : "normal"}
+                          className="pointer-events-none font-display font-semibold select-none opacity-95"
+                        >
+                          {labelLines.map((line, lineIdx) => (
+                            <tspan
+                              key={lineIdx}
+                              x={textX}
+                              dy={lineIdx === 0 ? (labelLines.length > 1 ? "-0.4em" : "0") : "1.2em"}
+                            >
+                              {line}
+                            </tspan>
+                          ))}
+                        </text>
+
+                        {/* Foreground text */}
+                        <text
+                          x={textX}
+                          y={textY}
+                          dy={dy}
+                          textAnchor={textAnchor}
+                          fill={labelColor}
+                          fontSize={fontSize}
+                          fontWeight={node.type === "central" || node.type === "phase" ? "bold" : "normal"}
+                          className="pointer-events-none font-display font-semibold select-none transition-colors duration-200 group-hover:fill-white"
+                        >
+                          {labelLines.map((line, lineIdx) => (
+                            <tspan
+                              key={lineIdx}
+                              x={textX}
+                              dy={lineIdx === 0 ? (labelLines.length > 1 ? "-0.4em" : "0") : "1.2em"}
+                            >
+                              {line}
+                            </tspan>
+                          ))}
+                        </text>
+                      </>
+                    );
+                  })()}
                 </g>
               );
             })}
@@ -471,13 +775,23 @@ export default function SkillMapCanvas({
           </g>
         </svg>
       </div>
+    </>
+  )}
 
-      {/* Side drawer for Node Details (slides in from right) */}
-      <div
-        className={`absolute top-0 right-0 h-full w-full sm:w-[380px] bg-brand-surface border-l border-white/10 shadow-2xl z-40 transition-transform duration-300 transform flex flex-col justify-between ${
-          selectedNode ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
+  {/* Backdrop blur overlay on mobile screens when side drawer is active */}
+  {selectedNode && (
+    <div 
+      className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[45] transition-opacity duration-300 sm:hidden cursor-pointer"
+      onClick={() => setSelectedNode(null)}
+    />
+  )}
+
+  {/* Side drawer for Node Details (slides in from right) */}
+  <div
+    className={`absolute top-0 right-0 h-full w-full sm:w-[380px] bg-brand-surface border-l border-white/10 shadow-2xl z-50 transition-transform duration-300 transform flex flex-col justify-between ${
+      selectedNode ? "translate-x-0" : "translate-x-full"
+    }`}
+  >
         {selectedNode && (
           <>
             {/* Header */}

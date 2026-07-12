@@ -17,6 +17,10 @@ import { User, Preferences, RoadmapData, SavedRoadmap } from "./types";
 import { CAREER_ROLES_150 as CAREER_ROLES, INDUSTRIES_15 as INDUSTRIES, slugify } from "./careersData";
 import { FEATURED_EXAMPLES, SKILLS_DATABASE } from "./data";
 import { BLOG_POSTS, BlogPost } from "./blogData";
+import { AFFILIATE_COURSES, matchCoursesToSkills, getCategoryGradients, getCategoryIconName } from "./coursesData";
+import CourseCarousel from "./components/CourseCarousel";
+import CourseGrid from "./components/CourseGrid";
+import InlineUrgencyStrip from "./components/InlineUrgencyStrip";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>("landing");
@@ -133,6 +137,8 @@ export default function App() {
 
       if (path === "/" || path === "/index.html") {
         setCurrentPage("landing");
+      } else if (path === "/deals" || path === "/recommended-courses") {
+        setCurrentPage("deals");
       } else if (path === "/explore") {
         setCurrentPage("explore");
       } else if (path === "/compare") {
@@ -216,7 +222,8 @@ export default function App() {
         "privacy-policy": "/privacy-policy",
         "terms-of-service": "/terms-of-service",
         "cookie-policy": "/cookie-policy",
-        blog: "/blog"
+        blog: "/blog",
+        deals: "/deals"
       };
       const path = pathsMap[page] || "/";
       window.history.pushState({}, "", path);
@@ -483,6 +490,33 @@ export default function App() {
               </div>
             </div>
 
+            {/* UPGRADE WITH PARTNER COURSES CAROUSEL */}
+            <div className="space-y-6 pt-4 text-left">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold tracking-wide uppercase text-brand-secondary bg-brand-secondary/10 px-2.5 py-1 rounded-full border border-brand-secondary/25">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-secondary animate-pulse" />
+                    Top Curated Udemy Partner Courses
+                  </span>
+                  <h2 className="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">
+                    Premium Masterclasses to Fast-Track Your Milestones
+                  </h2>
+                  <p className="text-brand-muted text-xs sm:text-sm max-w-2xl leading-relaxed">
+                    Looking for structured video curriculums, hands-on labs, and actual exam preps? Accelerate your learning roadmap milestones with these top-rated partner courses.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigateTo("deals")}
+                  className="text-xs font-semibold text-brand-secondary hover:text-white flex items-center gap-1 shrink-0 self-start md:self-auto transition-colors cursor-pointer"
+                >
+                  View All {AFFILIATE_COURSES.length} Deals <ArrowRight size={14} />
+                </button>
+              </div>
+              <div className="p-0.5 rounded-3xl bg-gradient-to-br from-brand-primary/10 via-brand-secondary/5 to-transparent border border-white/5">
+                <CourseCarousel />
+              </div>
+            </div>
+
             {/* STATS SECTION */}
             <div className="p-8 bg-brand-surface border border-white/5 rounded-3xl grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
               <div className="space-y-1">
@@ -614,7 +648,7 @@ export default function App() {
             PAGE: CAREER MAP GENERATOR
             ======================================= */}
         {currentPage === "map" && (
-          <div className="max-w-4xl mx-auto space-y-8">
+          <div className={`${generatorStep === 2 ? "max-w-7xl w-full" : "max-w-4xl"} mx-auto space-y-8 transition-all duration-300`}>
             {/* Step Indicators */}
             {generatorStep < 4 && (
               <div className="flex items-center justify-between border-b border-white/5 pb-4 font-mono text-[11px] font-bold text-brand-muted uppercase">
@@ -644,7 +678,7 @@ export default function App() {
             )}
 
             {/* Main Form container */}
-            <div className="p-6 sm:p-8 bg-brand-surface/50 border border-white/5 rounded-3xl shadow-xl">
+            <div className={`${generatorStep === 2 ? "p-4 sm:p-6 lg:p-8" : "p-6 sm:p-8"} bg-brand-surface/50 border border-white/5 rounded-3xl shadow-xl transition-all duration-300`}>
               {generatorStep === 1 && (
                 <SkillTagInput
                   selectedSkills={inputSkills}
@@ -802,86 +836,310 @@ export default function App() {
         )}
 
         {/* =======================================
-            PAGE: EXPLORE
+            PAGE: EXPLORE (with single career details /careers/[slug])
             ======================================= */}
         {currentPage === "explore" && (
-          <div className="space-y-8 text-left animate-fade-in">
-            <div className="space-y-2">
-              <h2 className="font-display font-extrabold text-3xl text-white tracking-tight">Explore Professional Careers</h2>
-              <p className="text-brand-muted text-sm leading-relaxed max-w-2xl">
-                Browse leading career roles, salary averages, job demand trends, and pre-generated learning paths. Click to load custom versions instantly.
-              </p>
-            </div>
+          previewRole !== null ? (
+            (() => {
+              const matchedRole = CAREER_ROLES.find(r => r.title.toLowerCase() === previewRole.toLowerCase() || slugify(r.title) === slugify(previewRole));
+              if (!matchedRole) return (
+                <div className="text-center py-12 space-y-4">
+                  <p className="text-brand-muted">Career path not found.</p>
+                  <button onClick={() => { setPreviewRole(null); navigateTo("explore"); }} className="px-4 py-2 rounded bg-white/5 border border-white/10 text-white cursor-pointer">
+                    Return to Explorer
+                  </button>
+                </div>
+              );
 
-            {/* Filter tags bar */}
-            <div className="flex gap-2 overflow-x-auto pb-1.5 border-b border-white/5 scrollbar-thin">
-              <button
-                onClick={() => setSelectedIndustry("all")}
-                className={`flex-none px-4 py-2 text-xs font-mono rounded-full border transition-all cursor-pointer ${
-                  selectedIndustry === "all" ? "border-brand-secondary bg-brand-secondary/10 text-brand-secondary font-bold" : "border-white/5 bg-brand-surface hover:bg-brand-surface2 text-brand-muted"
-                }`}
-              >
-                🌐 All Fields
-              </button>
-              {INDUSTRIES.map((ind) => (
-                <button
-                  key={ind.id}
-                  onClick={() => setSelectedIndustry(ind.id)}
-                  className={`flex-none px-4 py-2 text-xs font-mono rounded-full border transition-all cursor-pointer ${
-                    selectedIndustry === ind.id ? "border-brand-secondary bg-brand-secondary/10 text-brand-secondary font-bold" : "border-white/5 bg-brand-surface hover:bg-brand-surface2 text-brand-muted"
-                  }`}
-                >
-                  {ind.icon} {ind.name}
-                </button>
-              ))}
-            </div>
+              // Match relevant courses
+              const matchedCourses = matchCoursesToSkills(matchedRole.skills);
+              const firstCategory = matchedCourses[0]?.category || "Cloud Computing";
 
-            {/* Roles Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {CAREER_ROLES.filter(r => selectedIndustry === "all" || r.industryId === selectedIndustry).map((role) => (
-                <div
-                  key={role.title}
-                  className="p-5 bg-brand-surface border border-white/5 rounded-2xl flex flex-col justify-between h-[230px] group hover:border-brand-primary/45 hover:scale-[1.01] transition-all"
-                >
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-mono text-brand-muted uppercase">{role.industry}</span>
-                    <h4 className="font-display font-bold text-lg text-white leading-snug group-hover:text-brand-secondary transition-colors">
-                      {role.title}
-                    </h4>
-                    <p className="text-xs text-brand-muted leading-relaxed line-clamp-2">
-                      {role.description}
-                    </p>
+              return (
+                <div className="space-y-8 text-left animate-fade-in max-w-5xl mx-auto">
+                  {/* Breadcrumbs */}
+                  <div>
+                    <button
+                      onClick={() => {
+                        setPreviewRole(null);
+                        navigateTo("explore");
+                      }}
+                      className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-brand-secondary hover:text-white transition-colors cursor-pointer"
+                    >
+                      ← Back to All Careers
+                    </button>
                   </div>
 
+                  {/* Top Section: Category-filtered Partner Carousel */}
                   <div className="space-y-3">
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1">
-                      {role.skills.slice(0, 3).map((s) => (
-                        <span key={s} className="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-surface2 border border-white/5 text-brand-muted">
-                          {s}
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold tracking-wide uppercase text-brand-secondary bg-brand-secondary/10 px-2.5 py-1 rounded-full border border-brand-secondary/25">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-secondary animate-pulse" />
+                      Top Curated Partner Courses for {matchedRole.title}
+                    </span>
+                    <div className="p-0.5 rounded-3xl bg-gradient-to-br from-brand-primary/15 via-brand-secondary/5 to-transparent border border-white/5">
+                      <CourseCarousel activeCategory={firstCategory} />
+                    </div>
+                  </div>
+
+                  {/* Main Grid: Content (Left) & Market Insights (Right) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Career Information Card */}
+                    <div className="lg:col-span-7 bg-brand-surface border border-white/5 p-8 rounded-3xl space-y-6 shadow-xl">
+                      <div>
+                        <span className="text-xs font-mono text-brand-primary-light font-bold uppercase tracking-wider">
+                          {matchedRole.industry} • CAREER BLUEPRINT
                         </span>
+                        <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight leading-tight mt-1">
+                          {matchedRole.title}
+                        </h1>
+                      </div>
+
+                      <p className="text-sm sm:text-base text-brand-muted leading-relaxed font-sans">
+                        {matchedRole.description}
+                      </p>
+
+                      {/* Skills required */}
+                      <div className="space-y-3 pt-2">
+                        <h3 className="font-display font-bold text-base text-white">Required Technical Stack</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {matchedRole.skills.map((skill) => (
+                            <span key={skill} className="px-3 py-1.5 text-xs font-mono rounded-xl bg-brand-bg border border-white/8 text-white flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-brand-secondary" />
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Active CTAs */}
+                      <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-4">
+                        <button
+                          onClick={() => {
+                            setInputSkills([]);
+                            setSelectedCareers([matchedRole.title]);
+                            setGeneratorStep(3); // Jump straight to preferences
+                            setCurrentPage("map");
+                          }}
+                          className="px-6 py-3.5 rounded-xl font-bold text-brand-bg bg-gradient-to-r from-brand-primary to-brand-secondary hover:brightness-110 shadow-lg shadow-brand-primary/20 transition-all cursor-pointer text-sm flex items-center justify-center gap-2"
+                        >
+                          🗺️ Generate {matchedRole.title} Roadmap Free
+                        </button>
+                        <button
+                          onClick={() => {
+                            setInputSkills([]);
+                            setSelectedCareers([matchedRole.title]);
+                            setGeneratorStep(1); // Start from beginning to customize
+                            setCurrentPage("map");
+                          }}
+                          className="px-6 py-3.5 rounded-xl font-semibold border border-white/10 hover:border-brand-primary/50 text-white bg-white/5 hover:bg-brand-surface transition-all cursor-pointer text-sm"
+                        >
+                          Customize Inputs
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Market Rail */}
+                    <div className="lg:col-span-5 bg-brand-surface border border-white/5 p-6 rounded-3xl space-y-6">
+                      <h3 className="font-display font-bold text-lg text-white">US Market Metrics (2026)</h3>
+
+                      <div className="space-y-4 font-mono text-xs text-brand-muted">
+                        <div className="flex justify-between items-center py-2.5 border-b border-white/5">
+                          <span>Average Base Salary</span>
+                          <span className="text-white text-base font-sans font-bold">{matchedRole.salaryRange}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2.5 border-b border-white/5">
+                          <span>Job Market Demand</span>
+                          <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-brand-secondary border border-brand-secondary/25 uppercase">
+                            {matchedRole.demand}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-2.5 border-b border-white/5">
+                          <span>Est. Completion Time</span>
+                          <strong className="text-white">{matchedRole.timeEstimate}</strong>
+                        </div>
+                        <div className="flex justify-between items-center py-2.5 border-b border-white/5">
+                          <span>Baseline Difficulty</span>
+                          <strong className="text-brand-accent uppercase">{matchedRole.difficulty}</strong>
+                        </div>
+                      </div>
+
+                      {/* Interactive alert */}
+                      <div className="p-4 rounded-xl bg-brand-bg/40 border border-white/5 text-[11px] text-brand-muted leading-relaxed flex items-start gap-2.5">
+                        <Info size={14} className="text-brand-secondary shrink-0 mt-0.5" />
+                        <span>
+                          Market indicators represent current national aggregates. Visual milestones are updated dynamically as you toggle skills completed on your generated roadmap.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom: Recommended course recommendations cards */}
+                  <div className="space-y-6 pt-6 border-t border-white/5">
+                    <div>
+                      <span className="text-xs font-mono font-bold text-brand-primary-light uppercase tracking-wider">
+                        Partner Udemy Masterclasses
+                      </span>
+                      <h2 className="font-display font-bold text-xl sm:text-2xl text-white mt-1">
+                        Courses to Help You Get There Faster
+                      </h2>
+                      <p className="text-xs text-brand-muted">
+                        Skip the confusion and self-doubt. Build real portfolio-grade capstones and clear certifications with these highly-rated structured courses.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {matchedCourses.slice(0, 4).map((course) => (
+                        <a
+                          key={course.id}
+                          href={course.affiliateUrl}
+                          target="_blank"
+                          rel="noopener sponsored"
+                          className="p-5 bg-brand-surface hover:bg-brand-surface/80 border border-white/5 hover:border-brand-primary/45 rounded-2xl flex flex-col justify-between group transition-all cursor-pointer text-left"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-mono bg-brand-bg border border-white/8 px-2 py-0.5 rounded text-brand-muted uppercase">
+                                {course.category}
+                              </span>
+                              <span className="text-[9px] font-mono text-brand-primary-light font-bold tracking-wider uppercase bg-brand-primary/10 px-2 py-0.5 rounded border border-brand-primary/15">
+                                Partner Course
+                              </span>
+                            </div>
+                            <h4 className="font-display font-bold text-base text-white group-hover:text-brand-secondary transition-colors leading-snug">
+                              {course.title}
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {course.tags.slice(0, 3).map((tag) => (
+                                <span key={tag} className="text-[9px] font-mono bg-brand-bg/40 border border-white/5 text-brand-muted px-2 py-0.5 rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-6 text-xs">
+                            <div className="flex items-center gap-1">
+                              {course.rating ? (
+                                <>
+                                  <span className="text-yellow-500 font-bold">★ {course.rating}</span>
+                                  <span className="text-brand-muted text-[10px]">(Udemy)</span>
+                                </>
+                              ) : (
+                                <span className="text-[10px] text-brand-muted italic">Rating verification pending</span>
+                              )}
+                            </div>
+                            <span className="text-xs font-semibold text-brand-secondary group-hover:text-white flex items-center gap-1 transition-colors">
+                              Go to Udemy Course <ExternalLink size={13} />
+                            </span>
+                          </div>
+                        </a>
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-white/5 pt-2 text-xs">
-                      <span className="font-mono font-bold text-white">{role.salaryRange}</span>
-                      <button
-                        onClick={() => {
-                          setInputSkills([]);
-                          setSelectedCareers([role.title]);
-                          setGeneratorStep(3); // jump straight to Preferences
-                          setCurrentPage("map");
-                        }}
-                        className="text-xs font-semibold text-brand-secondary group-hover:text-white flex items-center gap-1 transition-colors"
-                      >
-                        Start Map <ArrowRight size={13} />
-                      </button>
+                    {/* Affiliate disclosure */}
+                    <div className="text-center pt-2">
+                      <p className="text-[10px] text-brand-muted italic max-w-2xl mx-auto leading-relaxed">
+                        Affiliate Disclosure: In accordance with FTC compliance, some of the links above are affiliate partner links. If you enroll through these links, SkillMap may earn a commission from Udemy at no extra cost to you.
+                      </p>
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })()
+          ) : (
+            <div className="space-y-8 text-left animate-fade-in">
+              <div className="space-y-2">
+                <h2 className="font-display font-extrabold text-3xl text-white tracking-tight">Explore Professional Careers</h2>
+                <p className="text-brand-muted text-sm leading-relaxed max-w-2xl">
+                  Browse leading career roles, salary averages, job demand trends, and pre-generated learning paths. Click a card to view detailed training recommendations.
+                </p>
+              </div>
+
+              {/* Filter tags bar */}
+              <div className="flex gap-2 overflow-x-auto pb-1.5 border-b border-white/5 scrollbar-thin">
+                <button
+                  onClick={() => setSelectedIndustry("all")}
+                  className={`flex-none px-4 py-2 text-xs font-mono rounded-full border transition-all cursor-pointer ${
+                    selectedIndustry === "all" ? "border-brand-secondary bg-brand-secondary/10 text-brand-secondary font-bold" : "border-white/5 bg-brand-surface hover:bg-brand-surface2 text-brand-muted"
+                  }`}
+                >
+                  🌐 All Fields
+                </button>
+                {INDUSTRIES.map((ind) => (
+                  <button
+                    key={ind.id}
+                    onClick={() => setSelectedIndustry(ind.id)}
+                    className={`flex-none px-4 py-2 text-xs font-mono rounded-full border transition-all cursor-pointer ${
+                      selectedIndustry === ind.id ? "border-brand-secondary bg-brand-secondary/10 text-brand-secondary font-bold" : "border-white/5 bg-brand-surface hover:bg-brand-surface2 text-brand-muted"
+                    }`}
+                  >
+                    {ind.icon} {ind.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Roles Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {CAREER_ROLES.filter(r => selectedIndustry === "all" || r.industryId === selectedIndustry).map((role) => (
+                  <div
+                    key={role.title}
+                    className="p-5 bg-brand-surface border border-white/5 rounded-2xl flex flex-col justify-between h-[230px] group hover:border-brand-primary/45 hover:scale-[1.01] transition-all cursor-pointer text-left"
+                    onClick={() => {
+                      setPreviewRole(role.title);
+                      navigateTo("explore", `/careers/${slugify(role.title)}`);
+                    }}
+                  >
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-mono text-brand-muted uppercase">{role.industry}</span>
+                      <h4 className="font-display font-bold text-lg text-white leading-snug group-hover:text-brand-secondary transition-colors">
+                        {role.title}
+                      </h4>
+                      <p className="text-xs text-brand-muted leading-relaxed line-clamp-2">
+                        {role.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-1">
+                        {role.skills.slice(0, 3).map((s) => (
+                          <span key={s} className="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-surface2 border border-white/5 text-brand-muted">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between border-t border-white/5 pt-2 text-xs">
+                        <span className="font-mono font-bold text-white">{role.salaryRange}</span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              setPreviewRole(role.title);
+                              navigateTo("explore", `/careers/${slugify(role.title)}`);
+                            }}
+                            className="text-xs font-semibold text-brand-muted hover:text-white transition-colors cursor-pointer"
+                          >
+                            Details
+                          </button>
+                          <button
+                            onClick={() => {
+                              setInputSkills([]);
+                              setSelectedCareers([role.title]);
+                              setGeneratorStep(3); // jump straight to Preferences
+                              setCurrentPage("map");
+                            }}
+                            className="text-xs font-semibold text-brand-secondary group-hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            Start Map <ArrowRight size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* =======================================
@@ -1246,6 +1504,43 @@ export default function App() {
         )}
 
         {/* =======================================
+            PAGE: DEALS & RECOMMENDED COURSES
+            ======================================= */}
+        {currentPage === "deals" && (
+          <div className="space-y-8 text-left animate-fade-in max-w-6xl mx-auto py-4">
+            {/* Page Header */}
+            <div className="space-y-2 border-b border-white/5 pb-6">
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold tracking-wide uppercase text-brand-secondary bg-brand-secondary/10 px-2.5 py-1 rounded-full border border-brand-secondary/25">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-secondary animate-pulse" />
+                Special Partner Offers
+              </span>
+              <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight">
+                Udemy Recommended Course Deals
+              </h1>
+              <p className="text-brand-muted text-sm sm:text-base max-w-3xl leading-relaxed">
+                Looking to accelerate your learning? Skip months of trial-and-error. We partner with the highest-quality Udemy instructors to bring you hand-selected, verified masterclasses covering critical cloud certifications, full-stack programming, cybersecurity, and data science.
+              </p>
+            </div>
+
+            {/* FTC disclosure card */}
+            <div className="p-5 rounded-2xl bg-brand-surface border border-brand-secondary/20 flex items-start gap-3.5 shadow-lg text-left">
+              <Info size={18} className="text-brand-secondary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="block text-xs font-bold text-white font-mono uppercase tracking-wide">FTC Affiliate & Sponsor Disclosure</span>
+                <p className="text-xs text-brand-muted leading-relaxed">
+                  In compliance with federal guidelines, please note that some of the courses featured below are sponsored referral recommendations. When you click these partner links and enroll, SkillMap may receive an affiliate commission from Udemy at <strong>absolutely zero additional cost to you</strong>. These micro-referrals are what keeps our entire core AI roadmapping software 100% free for everyone. We only list courses rated 4.5+ stars with verified professional instructors.
+                </p>
+              </div>
+            </div>
+
+            {/* Render filterable Grid of all 19 courses */}
+            <div className="bg-brand-surface/40 p-1 rounded-3xl border border-white/5">
+              <CourseGrid />
+            </div>
+          </div>
+        )}
+
+        {/* =======================================
             PAGE: PRIVACY POLICY
             ======================================= */}
         {currentPage === "privacy-policy" && (
@@ -1434,6 +1729,78 @@ export default function App() {
               className="prose prose-invert max-w-none text-brand-body text-sm leading-relaxed space-y-6"
               dangerouslySetInnerHTML={{ __html: selectedBlogPost.content }}
             />
+
+            {/* Contextually Matched Premium Partner Courses */}
+            {(() => {
+              const queryWords = `${selectedBlogPost.title} ${selectedBlogPost.description} ${selectedBlogPost.category}`.toLowerCase();
+              let matchedCategory = "Cloud Computing";
+              if (queryWords.includes("data") || queryWords.includes("ai") || queryWords.includes("machine learning")) {
+                matchedCategory = "Data Science & AI";
+              } else if (queryWords.includes("cyber") || queryWords.includes("security") || queryWords.includes("pentest")) {
+                matchedCategory = "Cybersecurity";
+              } else if (queryWords.includes("aws") || queryWords.includes("cloud") || queryWords.includes("azure")) {
+                matchedCategory = "Cloud Computing";
+              } else if (queryWords.includes("dev") || queryWords.includes("web") || queryWords.includes("react") || queryWords.includes("js")) {
+                matchedCategory = "Web Development";
+              } else if (queryWords.includes("business") || queryWords.includes("pm") || queryWords.includes("product")) {
+                matchedCategory = "Business";
+              } else if (queryWords.includes("finance") || queryWords.includes("accounting") || queryWords.includes("sap")) {
+                matchedCategory = "Finance & ERP";
+              } else if (queryWords.includes("marketing") || queryWords.includes("seo") || queryWords.includes("ads")) {
+                matchedCategory = "Marketing";
+              }
+
+              const matchedCourses = AFFILIATE_COURSES.filter(c => c.category === matchedCategory).slice(0, 3);
+              if (matchedCourses.length === 0) return null;
+
+              return (
+                <div className="space-y-4 pt-8 border-t border-white/5">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-secondary bg-brand-secondary/10 px-2.5 py-1 rounded-full border border-brand-secondary/25 inline-flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-secondary animate-pulse" />
+                      Recommended Training Partners (Sponsored)
+                    </span>
+                    <h3 className="font-display font-bold text-lg text-white">
+                      Recommended Courses For This Topic
+                    </h3>
+                    <p className="text-xs text-brand-muted">
+                      Based on this article's focus, we hand-selected these premium partner masterclasses to help you implement these strategies.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {matchedCourses.map(course => (
+                      <a
+                        key={course.id}
+                        href={course.affiliateUrl}
+                        target="_blank"
+                        rel="noopener sponsored"
+                        className="p-4 bg-brand-surface hover:bg-brand-surface2 border border-white/5 hover:border-brand-primary/45 rounded-xl transition-all flex flex-col justify-between group cursor-pointer text-left"
+                      >
+                        <div className="space-y-2">
+                          <span className="text-[9px] font-mono font-bold bg-brand-bg border border-white/5 text-brand-muted px-2 py-0.5 rounded uppercase inline-block">
+                            {course.badge}
+                          </span>
+                          <h4 className="text-xs font-bold text-white group-hover:text-brand-secondary transition-colors line-clamp-2 leading-snug">
+                            {course.title}
+                          </h4>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-4 text-[10px] text-brand-muted">
+                          <span>{course.rating ? `⭐ ${course.rating}` : "Udemy Partner"}</span>
+                          <span className="font-semibold text-brand-secondary group-hover:text-white flex items-center gap-0.5 transition-colors">
+                            Explore <ExternalLink size={10} />
+                          </span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                  
+                  <p className="text-[9px] text-brand-muted text-center pt-1 italic">
+                    Affiliate Disclosure: Some of the links in this article are partner recommendations. If you enroll, we earn a small referral commission from Udemy at no extra charge to you.
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* CTA Mind Map Generation Card */}
             <div className="p-8 bg-gradient-to-br from-brand-primary/15 via-brand-secondary/5 to-transparent border border-brand-primary/30 rounded-3xl text-center space-y-5 mt-12">
