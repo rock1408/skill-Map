@@ -114,18 +114,28 @@ export default function SkillTagInput({
                 setShowSuggestions(true);
               }}
               onFocus={() => setShowSuggestions(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  e.preventDefault();
+                  if (suggestions.length > 0) {
+                    addSkill(suggestions[0].name);
+                  } else {
+                    addSkill(searchQuery.trim());
+                  }
+                }
+              }}
               placeholder="Search e.g. Python, Figma, Excel, Project Management, Patient Care..."
               className="w-full pl-11 pr-4 py-3.5 bg-brand-surface border border-white/10 rounded-xl focus:border-brand-primary outline-none focus:ring-1 focus:ring-brand-primary/40 font-sans text-white placeholder-brand-muted transition-all"
             />
           </div>
 
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-30 bg-brand-surface2 border border-white/12 rounded-xl shadow-2xl divide-y divide-white/5 overflow-hidden">
+          {showSuggestions && searchQuery.trim() !== "" && (
+            <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#161b27] border border-white/15 rounded-xl shadow-2xl divide-y divide-white/5 overflow-hidden">
               {suggestions.map((item) => (
                 <button
                   key={item.name}
                   onClick={() => addSkill(item.name)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-brand-primary/10 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-brand-primary/10 transition-colors cursor-pointer"
                 >
                   <span className="text-white font-medium">{item.name}</span>
                   <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-brand-surface border border-white/5 text-brand-muted">
@@ -133,6 +143,17 @@ export default function SkillTagInput({
                   </span>
                 </button>
               ))}
+              {suggestions.length === 0 && (
+                <button
+                  onClick={() => addSkill(searchQuery.trim())}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-brand-secondary/10 transition-colors cursor-pointer"
+                >
+                  <span className="text-brand-secondary font-medium">Add "{searchQuery.trim()}" as a custom skill</span>
+                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-brand-secondary/15 border border-brand-secondary/20 text-brand-secondary">
+                    Custom
+                  </span>
+                </button>
+              )}
             </div>
           )}
         </div>
