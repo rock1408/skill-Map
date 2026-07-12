@@ -18,10 +18,23 @@ export default function Navbar({ user, onNavigate, currentPage, onLogout }: Navb
           onClick={() => onNavigate("landing")}
           className="flex items-center gap-3 group text-left cursor-pointer"
         >
-          <div className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-tr from-brand-primary to-brand-secondary p-[1px]">
-            <div className="w-full h-full bg-brand-bg rounded-[11px] flex items-center justify-center text-brand-secondary group-hover:text-brand-white transition-colors">
-              <Network size={20} className="stroke-[2.5]" />
-            </div>
+          <div className="w-10 h-10 flex items-center justify-center">
+            <svg viewBox="0 0 40 40" className="w-full h-full text-brand-secondary group-hover:text-brand-white transition-colors">
+              <defs>
+                <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#6C63FF" />
+                  <stop offset="100%" stopColor="#00D4AA" />
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="36" height="36" rx="10" ry="10" fill="#0D0F14" stroke="url(#navGrad)" strokeWidth="2" />
+              <g transform="translate(8, 8)" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                <rect x="16" y="16" width="6" height="6" rx="1" />
+                <rect x="2" y="16" width="6" height="6" rx="1" />
+                <rect x="9" y="2" width="6" height="6" rx="1" />
+                <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
+                <path d="M12 12V8" />
+              </g>
+            </svg>
           </div>
           <div>
             <span className="font-display text-xl font-bold text-white tracking-tight">

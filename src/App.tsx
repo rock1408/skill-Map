@@ -445,8 +445,25 @@ export default function App() {
                   
                   {/* Constellation Canvas SVG */}
                   <svg className="w-full h-full relative" viewBox="0 0 200 200">
-                    <circle cx="100" cy="100" r="16" className="fill-brand-bg stroke-brand-primary stroke-[2]" />
-                    <text x="100" y="104" textAnchor="middle" fill="#FFFFFF" fontSize="9" fontWeight="bold">Primary Goal</text>
+                    <defs>
+                      <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#6C63FF" />
+                        <stop offset="100%" stopColor="#00D4AA" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Central Brand Logo */}
+                    <g transform="translate(80, 80)">
+                      <rect x="0" y="0" width="40" height="40" rx="10" fill="#0D0F14" stroke="url(#heroGrad)" strokeWidth="2" className="pulse-glow" />
+                      <g transform="translate(8, 8)" stroke="#00D4AA" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                        <rect x="16" y="16" width="6" height="6" rx="1" />
+                        <rect x="2" y="16" width="6" height="6" rx="1" />
+                        <rect x="9" y="2" width="6" height="6" rx="1" />
+                        <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
+                        <path d="M12 12V8" />
+                      </g>
+                    </g>
+                    <text x="100" y="134" textAnchor="middle" fill="#FFFFFF" fontSize="8" fontWeight="bold" fontFamily="monospace">SKILLMAP</text>
 
                     {/* Nodes radiating */}
                     {[
