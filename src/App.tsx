@@ -21,6 +21,7 @@ import { AFFILIATE_COURSES, matchCoursesToSkills, getCategoryGradients, getCateg
 import CourseCarousel from "./components/CourseCarousel";
 import CourseGrid from "./components/CourseGrid";
 import InlineUrgencyStrip from "./components/InlineUrgencyStrip";
+import { generateLocalFallbackRoadmap } from "./utils/fallbackGenerator";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>("landing");
@@ -336,9 +337,25 @@ export default function App() {
       setIsGenerating(false);
       setCurrentPage("roadmap");
     } catch (err) {
-      console.error("Roadmap Generation failed", err);
-      setIsGenerating(false);
-      setGeneratorStep(3); // return to preferences on failure
+      console.warn("Backend Roadmap Generation failed, falling back to local generator", err);
+      try {
+        const localData = generateLocalFallbackRoadmap(
+          selectedCareers[0] || "Data Scientist",
+          inputSkills.map(s => s.name),
+          preferences
+        );
+        setActiveRoadmap(localData);
+        setCompletedNodes(inputSkills.filter(s => s.proficiency === "advanced" || s.proficiency === "intermediate").map(s => s.name));
+        setInProgressNodes(inputSkills.filter(s => s.proficiency === "beginner").map(s => s.name));
+        setActiveRoadmapId(`ex-local-fallback-${Math.random().toString(36).substring(2, 9)}`);
+        
+        setIsGenerating(false);
+        setCurrentPage("roadmap");
+      } catch (localErr) {
+        console.error("Local fallback generator also failed", localErr);
+        setIsGenerating(false);
+        setGeneratorStep(3); // return to preferences on failure
+      }
     }
   };
 

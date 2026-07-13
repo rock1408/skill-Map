@@ -19,20 +19,19 @@ export default function StarRating({ rating }: StarRatingProps) {
   const hasHalfStar = rating % 1 >= 0.5;
 
   return (
-    <div className="flex items-center gap-1.5 font-mono whitespace-nowrap">
+    <div className="flex items-center gap-1 font-mono whitespace-nowrap">
       <div className="flex text-yellow-500 shrink-0">
         {Array.from({ length: 5 }).map((_, i) => {
           if (i < fullStars) {
-            return <Star key={i} size={11} className="fill-current" />;
+            return <Star key={i} className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />;
           }
           if (i === fullStars && hasHalfStar) {
-            // Simple visual star representation
-            return <Star key={i} size={11} className="fill-current" />;
+            return <Star key={i} className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />;
           }
-          return <Star key={i} size={11} className="opacity-30" />;
+          return <Star key={i} className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-30" />;
         })}
       </div>
-      <span className="font-bold text-white text-xs mt-0.5 shrink-0">{roundedRating}★</span>
+      <span className="font-bold text-white text-[11px] sm:text-xs mt-0.5 shrink-0">{roundedRating}★</span>
     </div>
   );
 }

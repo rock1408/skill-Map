@@ -15,17 +15,30 @@ const PORT = 3000;
 app.use(express.json({ limit: "10mb" }));
 
 // Local JSON-based storage for maps, users, and progress
-const DB_FILE = path.join(process.cwd(), "data", "db.json");
+const DB_DIR = process.env.NODE_ENV === "production" ? "/tmp" : path.join(process.cwd(), "data");
+const DB_FILE = path.join(DB_DIR, "db.json");
 
 // Ensure data folder and db file exist
 if (!fs.existsSync(path.dirname(DB_FILE))) {
   fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
 }
 if (!fs.existsSync(DB_FILE)) {
-  fs.writeFileSync(
-    DB_FILE,
-    JSON.stringify({ users: [], roadmaps: [], progress: [] }, null, 2)
-  );
+  const originalDBPath = path.join(process.cwd(), "data", "db.json");
+  if (fs.existsSync(originalDBPath)) {
+    try {
+      fs.copyFileSync(originalDBPath, DB_FILE);
+    } catch (e) {
+      fs.writeFileSync(
+        DB_FILE,
+        JSON.stringify({ users: [], roadmaps: [], progress: [] }, null, 2)
+      );
+    }
+  } else {
+    fs.writeFileSync(
+      DB_FILE,
+      JSON.stringify({ users: [], roadmaps: [], progress: [] }, null, 2)
+    );
+  }
 }
 
 // DB Helpers

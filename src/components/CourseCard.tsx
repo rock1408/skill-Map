@@ -29,7 +29,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
 
   return (
     <div
-      className={`group relative flex flex-col justify-between bg-brand-surface border border-white/8 rounded-2xl p-5 hover:-translate-y-1.5 transition-all duration-300 shadow-xl ${grads.borderGlow}`}
+      className={`group relative flex flex-col justify-between bg-brand-surface border border-white/8 rounded-2xl p-4 sm:p-5 hover:-translate-y-1.5 transition-all duration-300 shadow-xl ${grads.borderGlow}`}
     >
       {/* Background tint layer */}
       <div className={`absolute inset-0 bg-gradient-to-br ${grads.from} ${grads.to} opacity-5 rounded-2xl transition-opacity group-hover:opacity-10 pointer-events-none`} />

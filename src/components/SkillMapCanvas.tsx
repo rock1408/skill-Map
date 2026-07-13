@@ -85,18 +85,18 @@ export default function SkillMapCanvas({
     return () => window.removeEventListener("resize", handleRecenter);
   }, [roadmap]);
 
-  // Generate Map Nodes and Edges Layout using robust radial math
+  // Generate Map Nodes and Edges Layout using robust sequential horizontal math
   const { nodes, edges } = useMemo(() => {
     const listNodes: MapNode[] = [];
     const listEdges: MapEdge[] = [];
 
-    // 1. Central Node
+    // 1. Central Node (Placed on the far left)
     listNodes.push({
       id: "central",
       label: roadmap.targetRole,
       type: "central",
       status: "have",
-      x: 0,
+      x: -250,
       y: 0,
       color: "#6366f1",
       details: {
@@ -107,15 +107,18 @@ export default function SkillMapCanvas({
 
     const phasesCount = roadmap.phases.length;
 
+    // Connect Central Node to Phase 0
+    if (phasesCount > 0) {
+      listEdges.push({ from: "central", to: "phase-0", type: "solid" });
+    }
+
     // 2. Phase and Skill nodes
     roadmap.phases.forEach((phase, idx) => {
-      // Calculate phase angle around center
-      const angle = (idx * 2 * Math.PI) / phasesCount - Math.PI / 2;
-      const phaseRadius = 240;
-      const px = phaseRadius * Math.cos(angle);
-      const py = phaseRadius * Math.sin(angle);
-
+      // Lay out phases horizontally: x = idx * 280
+      const px = idx * 280;
+      const py = 0;
       const phaseNodeId = `phase-${idx}`;
+
       listNodes.push({
         id: phaseNodeId,
         label: phase.title.split(":")[0], // "Phase 1"
@@ -125,7 +128,7 @@ export default function SkillMapCanvas({
         y: py,
         color: idx % 3 === 0 ? "#6366f1" : idx % 3 === 1 ? "#34d399" : "#fbbf24",
         phaseIdx: idx,
-        angle: angle,
+        angle: 0,
         details: {
           description: phase.title,
           objectives: phase.objectives,
@@ -137,27 +140,20 @@ export default function SkillMapCanvas({
         }
       });
 
-      // Edge from central to phase
-      listEdges.push({ from: "central", to: phaseNodeId, type: "solid" });
+      // Chain phases sequentially: Phase 0 -> Phase 1 -> Phase 2
+      if (idx > 0) {
+        listEdges.push({ from: `phase-${idx - 1}`, to: phaseNodeId, type: "solid" });
+      }
 
-      // Calculate skills for this phase radiating further outward
+      // Calculate skills for this phase stacked vertically in a column at x = idx * 280 + 110
       const skills = phase.skills || [];
       const skillCount = skills.length;
-      const childRadius = 150;
 
       skills.forEach((skillName, sIdx) => {
-        // Space skill nodes in an arc radiating outward from the phase node
-        const fanAngle = Math.min(Math.PI * 0.9, (skillCount * Math.PI) / 9 + Math.PI / 6);
-        const startAngle = angle - fanAngle / 2;
-        const sAngle = skillCount === 1 
-          ? angle 
-          : startAngle + (sIdx * fanAngle) / (skillCount - 1);
-
-        const sx = px + childRadius * Math.cos(sAngle);
-        const sy = py + childRadius * Math.sin(sAngle);
-
+        const sx = px + 110;
+        const sy = (sIdx - (skillCount - 1) / 2) * 75;
         const skillId = `skill-${idx}-${sIdx}`;
-        
+
         // Determine status dynamically
         let status: MapNode["status"] = "learn";
         if (completedNodes.includes(skillName)) status = "completed";
@@ -181,7 +177,7 @@ export default function SkillMapCanvas({
             ? "#f43f5e" 
             : "#71717a",
           phaseIdx: idx,
-          angle: sAngle,
+          angle: 0,
           details: {
             description: `Core skill in ${phase.title.split(":")[0]}. Necessary to achieve professional proficiency.`,
             resources: phase.freeResources,
@@ -195,33 +191,35 @@ export default function SkillMapCanvas({
       });
     });
 
-    // 3. Certifications
+    // 3. Certifications as a final milestone column on the far right
     if (roadmap.certifications && roadmap.certifications.length > 0) {
+      const lastPhaseX = (phasesCount - 1) * 280;
+      const certX = lastPhaseX + 280;
+      const certCount = roadmap.certifications.length;
+
       roadmap.certifications.forEach((cert, cIdx) => {
         const certId = `cert-${cIdx}`;
-        // Place certs around top/sides
-        const angle = -Math.PI / 4 - (cIdx * Math.PI) / 8;
-        const radius = 420;
-        const cx = radius * Math.cos(angle);
-        const cy = radius * Math.sin(angle);
+        const cy = (cIdx - (certCount - 1) / 2) * 85;
 
         listNodes.push({
           id: certId,
           label: cert.name,
           type: "cert",
           status: "learn",
-          x: cx,
+          x: certX,
           y: cy,
           color: "#fbbf24",
-          angle: angle,
+          angle: 0,
           details: {
             description: `Certification provided by ${cert.provider}. Exam cost: $${cert.examCostUSD}. Suggested preparation time: ${cert.prepWeeks} weeks.`,
             objectives: ["Prepare according to syllabus", "Take mock exam modules"]
           }
         });
 
-        // Edge from central to cert
-        listEdges.push({ from: "central", to: certId, type: "dashed" });
+        // Edge from last phase node to cert
+        if (phasesCount > 0) {
+          listEdges.push({ from: `phase-${phasesCount - 1}`, to: certId, type: "dashed" });
+        }
       });
     }
 
@@ -661,38 +659,25 @@ export default function SkillMapCanvas({
 
                     if (node.type === "central") {
                       textX = 0;
-                      textY = 40;
+                      textY = 42;
                       textAnchor = "middle";
                       dy = "0.3em";
-                    } else {
-                      const radialAngle = node.angle ?? 0;
-                      const textDist = r + 15; // spacing from node border
-
-                      textX = textDist * Math.cos(radialAngle);
-                      textY = textDist * Math.sin(radialAngle);
-
-                      const cosVal = Math.cos(radialAngle);
-                      if (cosVal > 0.3) {
-                        textAnchor = "start";
-                      } else if (cosVal < -0.3) {
-                        textAnchor = "end";
-                      } else {
-                        textAnchor = "middle";
-                      }
-
-                      const sinVal = Math.sin(radialAngle);
-                      if (sinVal > 0.5) {
-                        dy = "0.8em";
-                      } else if (sinVal < -0.5) {
-                        dy = "-0.3em";
-                      } else {
-                        dy = "0.3em";
-                      }
+                    } else if (node.type === "phase") {
+                      textX = 0;
+                      textY = -35;
+                      textAnchor = "middle";
+                      dy = "0.3em";
+                    } else if (node.type === "skill" || node.type === "cert") {
+                      textX = node.type === "skill" ? 22 : 20;
+                      textY = 0;
+                      textAnchor = "start";
+                      dy = "0.3em";
                     }
 
                     // Wrap long labels into beautiful multi-line labels
-                    const wrapText = (text: string, maxCharsPerLine = 15): string[] => {
-                      if (text.length <= maxCharsPerLine) return [text];
+                    const wrapText = (text: string): string[] => {
+                      const maxChars = (node.type === "skill" || node.type === "cert") ? 22 : 15;
+                      if (text.length <= maxChars) return [text];
                       const words = text.split(" ");
                       const lines: string[] = [];
                       let currentLine = "";
@@ -700,7 +685,7 @@ export default function SkillMapCanvas({
                       words.forEach((word) => {
                         if (currentLine === "") {
                           currentLine = word;
-                        } else if ((currentLine + " " + word).length <= maxCharsPerLine) {
+                        } else if ((currentLine + " " + word).length <= maxChars) {
                           currentLine += " " + word;
                         } else {
                           lines.push(currentLine);

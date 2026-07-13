@@ -305,6 +305,482 @@
       "is_public": true,
       "share_slug": "slug-eytumfu1h",
       "view_count": 0
+    },
+    {
+      "id": "qc49nehxp",
+      "userId": null,
+      "targetRole": "UX/UI Designer",
+      "inputSkills": [
+        "Python",
+        "HTML",
+        "CSS",
+        "Bash",
+        "Problem Solving",
+        "Excel",
+        "PowerPoint",
+        "Google Sheets",
+        "Leadership",
+        "Project Management"
+      ],
+      "preferences": {
+        "timeline": "1 Year",
+        "hoursPerWeek": 3,
+        "learningStyle": [
+          "video",
+          "project"
+        ],
+        "budget": "Free Only",
+        "situation": "Starting from scratch",
+        "motivation": "Salary Growth"
+      },
+      "roadmapJson": {
+        "targetRole": "UX/UI Designer",
+        "industry": "Tech / Design",
+        "totalEstimatedMonths": 12,
+        "hoursPerWeekAssumed": 3,
+        "skillMatchPercent": 25,
+        "summary": "This tailored roadmap bridges your strong background in HTML/CSS, project management, and analytical skills with the visual and user-centric methodologies of UX/UI Design. By leveraging 3 hours per week over a year, you will build a solid portfolio using purely free resources to transition into a high-paying design career.",
+        "existingSkillsRecognized": [
+          {
+            "skill": "HTML/CSS",
+            "level": "intermediate"
+          },
+          {
+            "skill": "Problem Solving",
+            "level": "advanced"
+          },
+          {
+            "skill": "Project Management",
+            "level": "intermediate"
+          },
+          {
+            "skill": "Leadership",
+            "level": "intermediate"
+          },
+          {
+            "skill": "Python",
+            "level": "beginner"
+          }
+        ],
+        "skillGaps": [
+          {
+            "skill": "Visual Design Principles (UI)",
+            "priority": "critical",
+            "reason": "Understanding color theory, typography, spacing, and grids is fundamental to creating aesthetic and functional interfaces."
+          },
+          {
+            "skill": "Figma & Prototyping Tools",
+            "priority": "critical",
+            "reason": "Figma is the industry-standard software for UI/UX design. Master it to build high-fidelity wireframes and interactive prototypes."
+          },
+          {
+            "skill": "UX Research & Usability Testing",
+            "priority": "important",
+            "reason": "Designing is not just about visuals; you must learn how to research user needs and validate designs through usability tests."
+          }
+        ],
+        "phases": [
+          {
+            "phaseNumber": 1,
+            "title": "UX Foundations & Figma Mastery",
+            "durationWeeks": 16,
+            "objectives": [
+              "Master the fundamentals of User Experience (UX) design principles.",
+              "Learn Figma tools, auto-layout, components, and basic prototyping.",
+              "Understand user personas, empathy mapping, and information architecture."
+            ],
+            "skills": [
+              "UX Principles",
+              "Figma",
+              "Wireframing",
+              "User Research"
+            ],
+            "freeResources": [
+              {
+                "type": "video",
+                "title": "Figma for Beginners Course",
+                "platform": "YouTube (Figma Official)",
+                "url": "https://www.youtube.com/playlist?list=PLXDU_eVOJTx7QHLShNqIXL1wyYFJBDSgX",
+                "estimatedHours": 10,
+                "description": "The definitive starting guide to mastering Figma directly from the creators of the tool."
+              },
+              {
+                "type": "course",
+                "title": "Introduction to UX Design",
+                "platform": "Coursera (Georgia Tech - Audit Mode)",
+                "url": "https://www.coursera.org/learn/user-experience-design",
+                "estimatedHours": 15,
+                "description": "Gain a baseline understanding of UX design processes, user research, and prototyping. Audit for free."
+              }
+            ],
+            "paidCourses": [],
+            "projects": [
+              {
+                "title": "E-Commerce Mobile Wireframe",
+                "description": "Map out and create low-to-mid fidelity wireframes in Figma for a local business shopping app.",
+                "skills": [
+                  "Figma",
+                  "Information Architecture",
+                  "Wireframing"
+                ],
+                "difficulty": "beginner",
+                "portfolioValue": "Demonstrates initial wireframing process, user flows, and Figma tool efficiency.",
+                "steps": [
+                  "Research 3 competitor shopping apps.",
+                  "Draw paper sketches of key screens (Home, Product Detail, Cart).",
+                  "Replicate sketches in digital gray-scale wireframes in Figma."
+                ]
+              }
+            ],
+            "milestone": "Comfortable navigating Figma and able to conceptualize UX wireframes from scratch.",
+            "weeklySchedule": "Spend 1.5 hours on video lectures/tutorials and 1.5 hours practicing layout techniques in Figma."
+          },
+          {
+            "phaseNumber": 2,
+            "title": "UI Design Craft & Interaction",
+            "durationWeeks": 20,
+            "objectives": [
+              "Learn visual design theory: typography, color systems, and grid alignment.",
+              "Master responsive design concepts (Desktop, Tablet, Mobile layout rules).",
+              "Implement advanced Figma workflows (Design Systems, Auto-Layout 4.0, Components)."
+            ],
+            "skills": [
+              "UI Design",
+              "Visual Hierarchy",
+              "Responsive Design",
+              "Prototyping"
+            ],
+            "freeResources": [
+              {
+                "type": "video",
+                "title": "UI Design Principles & Typography Masterclass",
+                "platform": "YouTube (Flux Academy)",
+                "url": "https://www.youtube.com/c/FluxAcademy",
+                "estimatedHours": 12,
+                "description": "Excellent playlists focused on the visual aspect of product design, composition, grids, and colors."
+              },
+              {
+                "type": "course",
+                "title": "UX/UI Design Tutorials",
+                "platform": "freeCodeCamp",
+                "url": "https://www.freecodecamp.org/news/tag/ux-design/",
+                "estimatedHours": 20,
+                "description": "Comprehensive practical deep-dives into UI styling, interaction details, and structural design."
+              }
+            ],
+            "paidCourses": [],
+            "projects": [
+              {
+                "title": "Responsive Web App Interface",
+                "description": "Design a high-fidelity landing page and dashboard for a SaaS service, showcasing desktop and mobile responsiveness.",
+                "skills": [
+                  "UI Design",
+                  "Auto-Layout",
+                  "Responsive Design",
+                  "Visual Systems"
+                ],
+                "difficulty": "intermediate",
+                "portfolioValue": "Highlights your ability to scale layouts across different screens and manage a consistent UI style guide.",
+                "steps": [
+                  "Define a style guide (typography scales, color palette, button components).",
+                  "Design the desktop layout for a home page and customer dashboard.",
+                  "Use Figma constraints and Auto-layout to adapt the design seamlessly to mobile screens."
+                ]
+              }
+            ],
+            "milestone": "A fully polished, responsive multi-page visual design mockup displaying strict layout adherence.",
+            "weeklySchedule": "Use 1 hour to study UI critiques and web trends, and 2 hours building and refining high-fidelity interfaces."
+          },
+          {
+            "phaseNumber": 3,
+            "title": "UX Research, Case Studies & Portfolio",
+            "durationWeeks": 16,
+            "objectives": [
+              "Learn to execute basic usability tests and analyze data.",
+              "Synthesize project work into thorough, compelling UX Case Studies.",
+              "Build a free online portfolio website showcasing 2-3 key design pieces."
+            ],
+            "skills": [
+              "Usability Testing",
+              "UX Writing",
+              "Portfolio Presentation",
+              "Case Study Writing"
+            ],
+            "freeResources": [
+              {
+                "type": "docs",
+                "title": "Nielsen Norman Group UX Articles",
+                "platform": "NNGroup",
+                "url": "https://www.nngroup.com/articles/",
+                "estimatedHours": 15,
+                "description": "The gold standard of user experience research articles. Read to learn industry-level usability testing and design heuristics."
+              },
+              {
+                "type": "video",
+                "title": "How to Build a UX Portfolio from Scratch",
+                "platform": "YouTube (Mizko)",
+                "url": "https://www.youtube.com/c/mizko",
+                "estimatedHours": 8,
+                "description": "Actionable visual guide to structuring case studies, organizing your work, and presenting designs to hiring managers."
+              }
+            ],
+            "paidCourses": [],
+            "projects": [
+              {
+                "title": "End-to-End UX/UI Case Study",
+                "description": "Perform research, ideate, wireframe, design, test, and document a custom mobile solution solving a real-world problem.",
+                "skills": [
+                  "User Research",
+                  "Testing",
+                  "Full UX Design Cycle",
+                  "Case Study Composition"
+                ],
+                "difficulty": "advanced",
+                "portfolioValue": "Your key portfolio piece that proves to employers you can tackle a design problem from start to finish.",
+                "steps": [
+                  "Identify a problem (e.g., public transit tracking) and interview 3-5 users.",
+                  "Map user journeys and create interactive prototypes.",
+                  "Run a quick usability test with the prototypes, document feedback, iterate design.",
+                  "Write up the entire process on Notion, Behance, or a free portfolio site (Framer/Webflow free tier)."
+                ]
+              }
+            ],
+            "milestone": "A live, professional design portfolio featuring 2 detailed UX case studies ready for job applications.",
+            "weeklySchedule": "Dedicate all 3 weekly hours to writing, reviewing, and publishing your case studies and polishing visual presentation."
+          }
+        ],
+        "certifications": [
+          {
+            "name": "Google UX Design Certificate",
+            "provider": "Coursera",
+            "examCostUSD": 0,
+            "prepWeeks": 24,
+            "priority": 1,
+            "url": "https://www.coursera.org/professional-certificates/google-ux-design",
+            "isFree": true
+          }
+        ],
+        "careerProgression": [
+          {
+            "level": "entry",
+            "title": "Junior UX/UI Designer",
+            "yearsExperience": "0-2",
+            "avgSalaryUSD": 75000,
+            "keySkills": [
+              "Figma Basics",
+              "Wireframing",
+              "Collaboration with Developers",
+              "Responsive UI Layouts"
+            ]
+          },
+          {
+            "level": "mid",
+            "title": "UX/UI Designer",
+            "yearsExperience": "2-5",
+            "avgSalaryUSD": 98000,
+            "keySkills": [
+              "Interaction Design",
+              "Usability Testing",
+              "Design Systems Management",
+              "Stakeholder Communication"
+            ]
+          },
+          {
+            "level": "senior",
+            "title": "Senior Product Designer",
+            "yearsExperience": "5+",
+            "avgSalaryUSD": 135000,
+            "keySkills": [
+              "Product Strategy",
+              "Advanced Prototyping",
+              "UX Metrics & Analytics",
+              "Leadership"
+            ]
+          }
+        ],
+        "jobReadinessChecklist": [
+          {
+            "item": "Create a live portfolio containing 2 comprehensive case studies",
+            "category": "portfolio"
+          },
+          {
+            "item": "Optimize LinkedIn profile tailored to Product/UX Design targeting entry positions",
+            "category": "resume"
+          },
+          {
+            "item": "Ensure design assets showcase working knowledge of responsive grids, auto-layout, and type scales",
+            "category": "skills"
+          },
+          {
+            "item": "Prepare 1-minute pitches for each portfolio piece highlighting your problem-solving process",
+            "category": "network"
+          },
+          {
+            "item": "Engage weekly in UX review groups to practice receiving constructive visual feedback",
+            "category": "mindset"
+          }
+        ],
+        "professionalCommunities": [
+          {
+            "name": "UXPA International",
+            "type": "association",
+            "url": "https://uxpa.org/"
+          },
+          {
+            "name": "/r/UIUX",
+            "type": "reddit",
+            "url": "https://www.reddit.com/r/UIUX/"
+          },
+          {
+            "name": "Design Buddies",
+            "type": "discord",
+            "url": "https://discord.gg/designbuddies"
+          }
+        ],
+        "careerTips": [
+          "Leverage your developer-related HTML/CSS background. Designers who understand how interfaces are coded are highly valued by engineering teams.",
+          "Do not skip the research phase. High-paying companies hire designers who base aesthetic choices on real-world data and user feedback rather than subjective preferences."
+        ],
+        "mindMapData": {
+          "centralNode": "UX/UI Design Path",
+          "branches": [
+            {
+              "id": "existing",
+              "label": "Leveraged Background",
+              "color": "#4caf50",
+              "children": [
+                {
+                  "id": "exist-1",
+                  "label": "HTML/CSS (Dev Handoff)",
+                  "type": "skill",
+                  "status": "have",
+                  "children": []
+                },
+                {
+                  "id": "exist-2",
+                  "label": "Problem Solving (UX Foundations)",
+                  "type": "skill",
+                  "status": "have",
+                  "children": []
+                },
+                {
+                  "id": "exist-3",
+                  "label": "Project Management (Roadmaps)",
+                  "type": "skill",
+                  "status": "have",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "phase1",
+              "label": "Phase 1: Foundations",
+              "color": "#2196f3",
+              "children": [
+                {
+                  "id": "p1-sk1",
+                  "label": "Figma Toolset Mastery",
+                  "type": "skill",
+                  "status": "critical",
+                  "children": []
+                },
+                {
+                  "id": "p1-sk2",
+                  "label": "UX Best Practices & Heuristics",
+                  "type": "skill",
+                  "status": "learn",
+                  "children": []
+                },
+                {
+                  "id": "p1-proj",
+                  "label": "E-Commerce Wireframing Project",
+                  "type": "project",
+                  "status": "learn",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "phase2",
+              "label": "Phase 2: Visual & UI Craft",
+              "color": "#9c27b0",
+              "children": [
+                {
+                  "id": "p2-sk1",
+                  "label": "Typography & Color Systems",
+                  "type": "skill",
+                  "status": "critical",
+                  "children": []
+                },
+                {
+                  "id": "p2-sk2",
+                  "label": "Interactive Prototyping",
+                  "type": "skill",
+                  "status": "learn",
+                  "children": []
+                },
+                {
+                  "id": "p2-proj",
+                  "label": "Responsive SaaS App UI",
+                  "type": "project",
+                  "status": "learn",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "phase3",
+              "label": "Phase 3: Case Studies & Portfolio",
+              "color": "#ff9800",
+              "children": [
+                {
+                  "id": "p3-sk1",
+                  "label": "UX Research Methods",
+                  "type": "skill",
+                  "status": "learn",
+                  "children": []
+                },
+                {
+                  "id": "p3-proj",
+                  "label": "End-to-End Case Study",
+                  "type": "project",
+                  "status": "learn",
+                  "children": []
+                },
+                {
+                  "id": "p3-cert",
+                  "label": "Google UX Certification",
+                  "type": "cert",
+                  "status": "learn",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "created_at": "2026-07-13T07:42:54.367Z",
+      "is_public": true,
+      "share_slug": "slug-qc49nehxp",
+      "view_count": 0
+    },
+    {
+      "id": "enp9k4hk9",
+      "userId": null,
+      "targetRole": "Data Scientist",
+      "inputSkills": [
+        "Python",
+        "SQL"
+      ],
+      "preferences": {
+        "timeline": "1 Year",
+        "hoursPerWeek": 15
+      },
+      "roadmapJson": {},
+      "created_at": "2026-07-13T07:47:58.560Z",
+      "is_public": true,
+      "share_slug": "slug-enp9k4hk9",
+      "view_count": 0
     }
   ],
   "progress": []
