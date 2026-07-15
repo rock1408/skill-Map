@@ -100,7 +100,7 @@ export default function RoadmapList({
           </div>
           
           <p className="text-xs text-brand-muted font-sans leading-relaxed">
-            {completedSkillsCount} of {totalSkills} essential skills cleared. Complete milestones below to update your mind map!
+            {completedSkillsCount} of {totalSkills} essential skills cleared. Complete milestones below to update your infographic!
           </p>
         </div>
 

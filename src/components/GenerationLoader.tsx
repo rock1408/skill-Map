@@ -18,7 +18,7 @@ const QUOTES = [
   "\"Do not let what you cannot do interfere with what you can do.\" — John Wooden"
 ];
 
-export default function GenerationLoader() {
+export default function GenerationLoader({ aiModel = "hybrid" }: { aiModel?: string }) {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [quoteIdx, setQuoteIdx] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -27,7 +27,7 @@ export default function GenerationLoader() {
   useEffect(() => {
     const stepInterval = setInterval(() => {
       setCurrentStepIdx((prev) => (prev < STEPS.length - 1 ? prev + 1 : prev));
-    }, 2800);
+    }, 1200);
 
     return () => clearInterval(stepInterval);
   }, []);
@@ -36,7 +36,7 @@ export default function GenerationLoader() {
   useEffect(() => {
     const quoteInterval = setInterval(() => {
       setQuoteIdx((prev) => (prev + 1) % QUOTES.length);
-    }, 5000);
+    }, 3200);
 
     return () => clearInterval(quoteInterval);
   }, []);
@@ -46,10 +46,10 @@ export default function GenerationLoader() {
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 98) return 98; // Hold before load complete
-        const inc = Math.random() * 4 + 1;
+        const inc = Math.random() * 8 + 3;
         return Math.min(prev + inc, 98);
       });
-    }, 300);
+    }, 100);
 
     return () => clearInterval(progressInterval);
   }, []);
@@ -106,6 +106,17 @@ export default function GenerationLoader() {
           <span>COMPILING ALGORITHMS</span>
           <span>{Math.floor(progress)}%</span>
         </div>
+      </div>
+
+      {/* Active AI Engine Badge */}
+      <div className="flex items-center gap-1.5 px-4 py-1.5 bg-brand-surface border border-white/5 rounded-full text-[10px] font-mono text-brand-muted uppercase tracking-wider">
+        <Sparkles size={11} className="text-brand-primary animate-pulse" />
+        <span>Active Engine: </span>
+        <span className="text-brand-secondary font-bold">
+          {aiModel === "hybrid" ? "Google Gemini + NVIDIA Nemotron (Parallel Dual)" :
+           aiModel === "nemotron" ? "NVIDIA Nemotron-3 NIM" :
+           "Google Gemini 3.5"}
+        </span>
       </div>
 
       {/* Rotating quotes box */}

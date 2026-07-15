@@ -66,6 +66,51 @@ const ai = new GoogleGenAI({
   },
 });
 
+// Initialize Nemotron/NVIDIA API Config
+const nemotronApiKey = process.env.NEMOTRON_3_ULTRA_550B_A55B || process.env.NEMOTRON_API_KEY || process.env.NVIDIA_API_KEY;
+
+// Helper to call NVIDIA Nemotron API (or other OpenAI-compatible services using the key)
+async function generateWithNemotron(systemInstruction: string, prompt: string, apiKeyToUse: string) {
+  const modelsToTry = ["nemotron-3-ultra-550b-a55b", "nvidia/nemotron-4-340b-instruct", "nvidia/nemotron-3-8b-instruct"];
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    try {
+      console.log(`Attempting Nemotron generation with model: ${model}`);
+      const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKeyToUse}`,
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            { role: "system", content: systemInstruction },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.2,
+          max_tokens: 3000,
+          response_format: { type: "json_object" }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API returned ${response.status} for model ${model}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      return JSON.parse(content);
+    } catch (err: any) {
+      console.warn(`Nemotron attempt failed for model ${model}:`, err.message);
+      lastError = err;
+    }
+  }
+  throw lastError || new Error("All Nemotron models failed to generate.");
+}
+
 // Fallback Mock data generator if API key is missing/invalid
 function generateFallbackRoadmap(targetRole: string, inputSkills: string[], preferences: any) {
   const years = preferences.timeline || "1 Year";
@@ -246,7 +291,7 @@ function generateFallbackRoadmap(targetRole: string, inputSkills: string[], pref
   };
 }
 
-// API: Generate Roadmap using Gemini
+// API: Generate Roadmap using Gemini and/or Nemotron
 app.post("/api/generate-roadmap", async (req, res) => {
   const { targetRole, inputSkills, preferences } = req.body;
 
@@ -261,14 +306,19 @@ app.post("/api/generate-roadmap", async (req, res) => {
   const budget = preferences?.budget || "Free Only";
   const currentSituation = preferences?.situation || "Starting from scratch";
   const motivation = preferences?.motivation || "Career growth";
+  const selectedModel = preferences?.aiModel || "hybrid";
 
-  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+  const isGeminiAvailable = apiKey && apiKey !== "MY_GEMINI_API_KEY";
+  const isNemotronAvailable = nemotronApiKey && nemotronApiKey !== "MY_NEMOTRON_KEY";
+
+  // If no API keys are available at all, serve high-fidelity mock custom roadmap
+  if (!isGeminiAvailable && !isNemotronAvailable) {
     console.log("No valid API Key. Serving high-fidelity mock custom roadmap.");
     const mockMap = generateFallbackRoadmap(targetRole, inputSkills || [], preferences || {});
     return res.json(mockMap);
   }
 
-  const systemPrompt = `You are SkillMap AI — a world-class career coach and curriculum designer supporting ALL career fields globally. Your mission is to generate highly personalized, actionable career roadmaps in JSON format.
+  const systemPromptFull = `You are SkillMap AI — a world-class career coach and curriculum designer supporting ALL career fields globally. Your mission is to generate highly personalized, actionable career roadmaps in JSON format.
 
 Analyze the user's details:
 - Current skills they already know: ${skillsStr}
@@ -283,7 +333,8 @@ Analyze the user's details:
 Design a personalized roadmap with 3 learning phases specifically structured for this profile.
 Recognize and validate their current skills to show them what they have. 
 Highlight the remaining gaps. Provide real recommended platforms (Udemy, Coursera, edX, YouTube, freeCodeCamp, etc.) with realistic parameters.
-Provide mind-map branches starting from Phase 1, Phase 2, Phase 3 with skills.
+
+CRITICAL FOR GENERATION SPEED: Be extremely brief, crisp, and concise in all text fields, descriptions, titles, summaries, and lists. Keep statements punchy and minimal. Avoid long paragraphs. Do not return more than 2 items in array lists (such as resources, paidCourses, careerTips, etc.) where possible to speed up response time.
 
 ALWAYS respond in this exact JSON format (strictly JSON, no extra text):
 {
@@ -374,32 +425,133 @@ ALWAYS respond in this exact JSON format (strictly JSON, no extra text):
   ],
   "careerTips": ["string"],
   "mindMapData": {
-    "centralNode": "string",
-    "branches": [
-      {
-        "id": "string",
-        "label": "string",
-        "color": "string",
-        "children": [
-          {
-            "id": "string",
-            "label": "string",
-            "type": "skill|resource|project|cert",
-            "status": "have|learn|critical",
-            "children": []
-          }
-        ]
-      }
-    ]
+    "centralNode": "",
+    "branches": []
   }
 }`;
 
+  const systemPromptGeminiCoreOnly = `You are SkillMap AI — Core Engine. Your task is to generate a highly detailed 3-phase learning curriculum for a ${targetRole}.
+Analyze the user's details:
+- Current skills: ${skillsStr}
+- Available hours/week: ${hoursPerWeek}
+- Timeline: ${timelineGoal}
+- Learning styles: ${learningStyles}
+- Budget: ${budget}
+- Current background: ${currentSituation}
+- Motivation: ${motivation}
+
+CRITICAL FOR SPEED: Be very brief and crisp in text descriptions. Do not return more than 2 resources/courses/projects per phase.
+ALWAYS respond in this exact JSON format (strictly JSON, no extra text):
+{
+  "targetRole": "string",
+  "industry": "string",
+  "totalEstimatedMonths": number,
+  "hoursPerWeekAssumed": number,
+  "skillMatchPercent": number,
+  "summary": "2-3 sentences profile summary",
+  "existingSkillsRecognized": [{"skill": "string", "level": "beginner|intermediate|advanced"}],
+  "skillGaps": [{"skill": "string", "priority": "critical|important|nice-to-have", "reason": "string"}],
+  "phases": [
+    {
+      "phaseNumber": number,
+      "title": "string",
+      "durationWeeks": number,
+      "objectives": ["string"],
+      "skills": ["string"],
+      "freeResources": [{"type": "video|course|docs|book|community|tool", "title": "string", "platform": "string", "url": "string", "estimatedHours": number, "description": "string"}],
+      "paidCourses": [{"platform": "string", "title": "string", "instructor": "string", "priceUSD": number, "durationHours": number, "rating": number, "url": "string", "whyRecommended": "string"}],
+      "projects": [{"title": "string", "description": "string", "skills": ["string"], "difficulty": "beginner|intermediate|advanced", "portfolioValue": "string", "steps": ["string"]}],
+      "milestone": "string",
+      "weeklySchedule": "string"
+    }
+  ]
+}`;
+
+  const systemPromptNemotronSupplementalOnly = `You are SkillMap AI — Professional Growth Engine. Your task is to generate supplemental professional assets for a ${targetRole}.
+Analyze the user's details:
+- Current skills: ${skillsStr}
+- Target role: ${targetRole}
+- Budget: ${budget}
+- Motivation: ${motivation}
+
+CRITICAL FOR SPEED: Keep descriptions concise and punchy.
+ALWAYS respond in this exact JSON format (strictly JSON, no extra text):
+{
+  "certifications": [
+    {"name": "string", "provider": "string", "examCostUSD": number, "prepWeeks": number, "priority": number, "url": "string", "isFree": boolean}
+  ],
+  "careerProgression": [
+    {"level": "entry|mid|senior|lead|executive", "title": "string", "yearsExperience": "string", "avgSalaryUSD": number, "keySkills": ["string"]}
+  ],
+  "jobReadinessChecklist": [
+    {"item": "string", "category": "portfolio|network|resume|skills|mindset"}
+  ],
+  "professionalCommunities": [
+    {"name": "string", "type": "discord|slack|reddit|association|meetup", "url": "string"}
+  ],
+  "careerTips": ["string"]
+}`;
+
+  // Execute Parallel Hybrid Gen
+  if (selectedModel === "hybrid" && isGeminiAvailable && isNemotronAvailable) {
+    try {
+      console.log("Executing Hybrid Generation using BOTH Gemini and Nemotron in parallel...");
+      const [geminiResult, nemotronResult] = await Promise.all([
+        ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: "Generate core skill map curriculum",
+          config: {
+            systemInstruction: systemPromptGeminiCoreOnly,
+            responseMimeType: "application/json",
+          },
+        }).then(r => JSON.parse(r.text || "{}")),
+        generateWithNemotron(systemPromptNemotronSupplementalOnly, "Generate professional career supplements", nemotronApiKey!)
+      ]);
+
+      const merged = {
+        ...geminiResult,
+        certifications: nemotronResult.certifications || [],
+        careerProgression: nemotronResult.careerProgression || [],
+        jobReadinessChecklist: nemotronResult.jobReadinessChecklist || [],
+        professionalCommunities: nemotronResult.professionalCommunities || [],
+        careerTips: nemotronResult.careerTips || [],
+        mindMapData: { centralNode: targetRole, branches: [] }
+      };
+
+      return res.json(merged);
+    } catch (parallelErr) {
+      console.warn("Parallel generation failed, falling back to full single generation:", parallelErr);
+      // Fallback will proceed below
+    }
+  }
+
+  // Single Model Generation (or Hybrid Fallback)
+  const useNemotron = (selectedModel === "nemotron" && isNemotronAvailable) || (!isGeminiAvailable && isNemotronAvailable);
+
+  if (useNemotron) {
+    try {
+      console.log("Generating complete roadmap with NVIDIA Nemotron...");
+      const result = await generateWithNemotron(systemPromptFull, "Generate complete skill map", nemotronApiKey!);
+      return res.json(result);
+    } catch (nemotronErr) {
+      console.error("Nemotron complete generation failed:", nemotronErr);
+      if (isGeminiAvailable) {
+        console.log("Falling back to Gemini after Nemotron failure...");
+      } else {
+        const mockMap = generateFallbackRoadmap(targetRole, inputSkills || [], preferences || {});
+        return res.json(mockMap);
+      }
+    }
+  }
+
+  // Default / Fallback: Google Gemini
   try {
+    console.log("Generating complete roadmap with Google Gemini...");
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
       contents: "Generate the skill map",
       config: {
-        systemInstruction: systemPrompt,
+        systemInstruction: systemPromptFull,
         responseMimeType: "application/json",
       },
     });
@@ -408,8 +560,7 @@ ALWAYS respond in this exact JSON format (strictly JSON, no extra text):
     const parsed = JSON.parse(text);
     return res.json(parsed);
   } catch (error: any) {
-    console.error("Gemini Generation Error:", error);
-    // Serve fallback custom roadmap if API error occurs
+    console.error("Gemini complete generation failed:", error);
     const mockMap = generateFallbackRoadmap(targetRole, inputSkills || [], preferences || {});
     return res.json(mockMap);
   }

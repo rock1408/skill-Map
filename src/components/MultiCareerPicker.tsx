@@ -106,7 +106,7 @@ export default function MultiCareerPicker({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[500px]">
         
         {/* PANEL 1: Industry Sidebar */}
-        <div className="lg:col-span-3 space-y-2 bg-brand-surface border border-white/5 p-3 rounded-2xl max-h-[500px] overflow-y-auto">
+        <div className="lg:col-span-3 min-w-0 space-y-2 bg-brand-surface border border-white/5 p-3 rounded-2xl max-h-[500px] overflow-y-auto">
           <span className="block text-xs font-bold font-display text-brand-muted uppercase tracking-wider mb-2 px-2">
             Categories
           </span>
@@ -144,7 +144,7 @@ export default function MultiCareerPicker({
         </div>
 
         {/* PANEL 2: Career Grid */}
-        <div className="lg:col-span-6 space-y-4">
+        <div className="lg:col-span-6 min-w-0 space-y-4">
           {/* Controls Bar */}
           <div className="flex flex-col xl:flex-row gap-3">
             <div className="relative flex-1 min-w-[180px]">
@@ -194,7 +194,7 @@ export default function MultiCareerPicker({
           </div>
 
           {/* Cards Container */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[440px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 max-h-[440px] overflow-y-auto pr-1">
             {filteredRoles.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center p-12 border border-dashed border-white/8 bg-brand-surface/25 rounded-2xl text-center text-brand-muted">
                 <Sliders size={24} className="mb-2 text-brand-muted" />
@@ -264,7 +264,7 @@ export default function MultiCareerPicker({
         </div>
 
         {/* PANEL 3: Career Portfolio Summary */}
-        <div className="lg:col-span-3 space-y-4 bg-brand-surface border border-white/5 p-4 rounded-2xl flex flex-col justify-between max-h-[500px]">
+        <div className="lg:col-span-3 min-w-0 space-y-4 bg-brand-surface border border-white/5 p-4 rounded-2xl flex flex-col justify-between max-h-[500px]">
           <div className="space-y-4 overflow-y-auto pr-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold font-display text-brand-white uppercase tracking-wider">

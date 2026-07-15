@@ -12,6 +12,7 @@ export interface Preferences {
   budget: string;
   situation: string;
   motivation: string;
+  aiModel?: string;
 }
 
 export interface ExistingSkill {
@@ -131,7 +132,7 @@ export interface RoadmapData {
   jobReadinessChecklist: JobReadinessItem[];
   professionalCommunities: ProfessionalCommunity[];
   careerTips: string[];
-  mindMapData: MindMapData;
+  mindMapData?: MindMapData;
 }
 
 export interface SavedRoadmap {

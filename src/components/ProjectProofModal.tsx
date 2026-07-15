@@ -275,7 +275,7 @@ export default function ProjectProofModal({
                 )}
 
                 <p className="text-[11px] font-sans text-brand-muted leading-relaxed pt-1">
-                  💡 This project proof is securely anchored to this skill node, instantly completing the branch on your interactive Mind Map!
+                  💡 This project proof is securely anchored to this skill node, instantly completing the branch on your interactive Infographic!
                 </p>
               </div>
 

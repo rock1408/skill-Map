@@ -9,7 +9,7 @@ import SkillTagInput from "./components/SkillTagInput";
 import MultiCareerPicker from "./components/MultiCareerPicker";
 import PreferencesForm from "./components/PreferencesForm";
 import GenerationLoader from "./components/GenerationLoader";
-import SkillMapCanvas from "./components/SkillMapCanvas";
+import InfographicView from "./components/InfographicView";
 import RoadmapList from "./components/RoadmapList";
 import SalaryChart from "./components/SalaryChart";
 import ProjectProofModal from "./components/ProjectProofModal";
@@ -38,7 +38,8 @@ export default function App() {
     learningStyle: ["video", "project"],
     budget: "Free Only",
     situation: "Starting from scratch",
-    motivation: "Career shift"
+    motivation: "Career shift",
+    aiModel: "hybrid"
   });
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -47,7 +48,7 @@ export default function App() {
   const [activeRoadmapId, setActiveRoadmapId] = useState<string | null>(null);
   const [completedNodes, setCompletedNodes] = useState<string[]>([]);
   const [inProgressNodes, setInProgressNodes] = useState<string[]>([]);
-  const [roadmapView, setRoadmapView] = useState<"map" | "list">("map");
+  const [roadmapView, setRoadmapView] = useState<"infographic" | "list">("infographic");
 
   // Project Verification Proof States
   const [proofs, setProofs] = useState<any[]>([]);
@@ -315,8 +316,8 @@ export default function App() {
       setCompletedNodes(inputSkills.filter(s => s.proficiency === "advanced" || s.proficiency === "intermediate").map(s => s.name));
       setInProgressNodes(inputSkills.filter(s => s.proficiency === "beginner").map(s => s.name));
 
-      // Save generated roadmap automatically
-      const saveRes = await fetch("/api/save-roadmap", {
+      // Save generated roadmap automatically in the background for zero-latency page transitions
+      fetch("/api/save-roadmap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -326,13 +327,15 @@ export default function App() {
           preferences,
           roadmapJson: data
         })
+      }).then(async (saveRes) => {
+        if (saveRes.ok) {
+          const savedData = await saveRes.json();
+          setActiveRoadmapId(savedData.shareSlug);
+          if (user) loadSavedMaps(user.id);
+        }
+      }).catch((err) => {
+        console.warn("Background auto-save failed", err);
       });
-
-      if (saveRes.ok) {
-        const savedData = await saveRes.json();
-        setActiveRoadmapId(savedData.shareSlug);
-        if (user) loadSavedMaps(user.id);
-      }
 
       setIsGenerating(false);
       setCurrentPage("roadmap");
@@ -429,7 +432,7 @@ export default function App() {
                 </h1>
 
                 <p className="text-brand-muted text-base sm:text-lg leading-relaxed max-w-2xl font-sans">
-                  Enter what you know. Select where you want to go. SkillMap's AI models instantly construct your custom visual career mind-map, highlighting crucial skill gaps, milestones, and certified pipelines — 100% free.
+                  Enter what you know. Select where you want to go. SkillMap's AI models instantly construct your custom visual career infographic, highlighting crucial skill gaps, milestones, and certified pipelines — 100% free.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
@@ -590,7 +593,7 @@ export default function App() {
                   <div className="w-12 h-12 rounded-xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent font-bold font-mono text-lg">
                     3
                   </div>
-                  <h3 className="font-display font-bold text-lg text-white">Get Your Mind Map</h3>
+                  <h3 className="font-display font-bold text-lg text-white">Get Your Infographic</h3>
                   <p className="text-xs text-brand-muted leading-relaxed">
                     AI builds your personalized step-by-step roadmap with phases, milestones, portfolio projects, and direct links to leading free resources.
                   </p>
@@ -726,7 +729,7 @@ export default function App() {
                 />
               )}
 
-              {generatorStep === 4 && <GenerationLoader />}
+              {generatorStep === 4 && <GenerationLoader aiModel={preferences.aiModel} />}
             </div>
           </div>
         )}
@@ -785,14 +788,14 @@ export default function App() {
               {/* Action Buttons row */}
               <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={() => setRoadmapView("map")}
+                  onClick={() => setRoadmapView("infographic")}
                   className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
-                    roadmapView === "map"
+                    roadmapView === "infographic"
                       ? "bg-brand-primary text-white border border-brand-primary"
                       : "bg-brand-surface text-brand-body border border-white/5 hover:border-white/10"
                   }`}
                 >
-                  🗺️ Mind Map View
+                  📊 Infographic View
                 </button>
                 <button
                   onClick={() => setRoadmapView("list")}
@@ -817,8 +820,8 @@ export default function App() {
             </div>
 
             {/* Active Sub View Container */}
-            {roadmapView === "map" ? (
-              <SkillMapCanvas
+            {roadmapView === "infographic" ? (
+              <InfographicView
                 roadmap={activeRoadmap}
                 completedNodes={completedNodes}
                 setCompletedNodes={setCompletedNodes}
@@ -1330,7 +1333,7 @@ export default function App() {
           <div className="max-w-2xl mx-auto space-y-6 text-left animate-fade-in py-8">
             <h2 className="font-display font-extrabold text-3xl text-white">About SkillMap</h2>
             <p className="text-sm text-brand-muted leading-relaxed">
-              SkillMap is an open, global career path decoder and visual mind-mapping curriculum platform. We believe that professional growth shouldn't hide behind paid paywalls, high Stripe plans, or subscription models.
+              SkillMap is an open, global career path decoder and visual career infographic curriculum platform. We believe that professional growth shouldn't hide behind paid paywalls, high Stripe plans, or subscription models.
             </p>
             
             <div className="space-y-4 pt-4 border-t border-white/5">
@@ -1357,7 +1360,7 @@ export default function App() {
                   {currentPage === "login" ? "Welcome Back to SkillMap" : "Create Your Free Account"}
                 </h3>
                 <p className="text-xs text-brand-muted">
-                  Save your generated mind-maps and track completed progress milestones forever.
+                  Save your generated career infographics and track completed progress milestones forever.
                 </p>
               </div>
 
@@ -1463,9 +1466,9 @@ export default function App() {
             {savedMaps.length === 0 ? (
               <div className="p-12 border border-dashed border-white/8 bg-brand-surface/20 rounded-2xl text-center space-y-4 max-w-lg mx-auto">
                 <Network size={36} className="text-brand-muted mx-auto" />
-                <h4 className="font-display font-bold text-lg text-white">No saved maps yet!</h4>
+                <h4 className="font-display font-bold text-lg text-white">No saved infographics yet!</h4>
                 <p className="text-xs text-brand-muted leading-relaxed">
-                  Generate your custom career path mind maps using our step generator to see them displayed here.
+                  Generate your custom career path infographics using our step generator to see them displayed here.
                 </p>
                 <button
                   onClick={() => {

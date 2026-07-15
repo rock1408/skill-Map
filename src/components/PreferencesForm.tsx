@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Map, Clock, Video, BookOpen, PenTool, Award, GraduationCap, Coins, TrendingUp } from "lucide-react";
+import { ArrowLeft, Map, Clock, Video, BookOpen, PenTool, Award, GraduationCap, Coins, TrendingUp, Cpu, Sparkles } from "lucide-react";
 import { Preferences } from "../types";
 
 interface PreferencesFormProps {
@@ -180,6 +180,43 @@ export default function PreferencesForm({
                   }`}
                 >
                   {m.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* AI Generation Engine */}
+        <div className="col-span-1 md:col-span-2 space-y-3 pt-2">
+          <span className="block text-sm font-semibold font-display text-brand-white uppercase tracking-wider flex items-center gap-1.5">
+            <Cpu size={15} className="text-brand-primary" /> AI Generation Engine
+          </span>
+          <p className="text-xs text-brand-muted mb-2">
+            Select how your personalized roadmap is generated. Choose <strong>Dual-Engine (Parallel)</strong> to leverage both Google Gemini and NVIDIA Nemotron in parallel for maximum speed and comprehensive detail.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { id: "hybrid", label: "⚡ Dual-Engine (Parallel)", desc: "Parallel Gemini 3.5 + NVIDIA Nemotron-3" },
+              { id: "gemini", label: "🟢 Google Gemini 3.5", desc: "Native Google Gemini API" },
+              { id: "nemotron", label: "🔵 NVIDIA Nemotron-3", desc: "NVIDIA NIM Nemotron API" },
+            ].map((engine) => {
+              const isSelected = (preferences.aiModel || "hybrid") === engine.id;
+              return (
+                <button
+                  key={engine.id}
+                  type="button"
+                  onClick={() => updatePreference("aiModel", engine.id)}
+                  className={`p-4 flex flex-col items-start text-left gap-1 rounded-xl border transition-all cursor-pointer ${
+                    isSelected
+                      ? "border-brand-primary bg-brand-primary/10 text-white font-bold scale-[1.01]"
+                      : "border-white/8 bg-brand-surface hover:bg-brand-surface2 text-brand-body hover:text-white"
+                  }`}
+                >
+                  <span className="text-sm font-bold flex items-center gap-1.5">
+                    {engine.id === "hybrid" && <Sparkles size={14} className="text-brand-primary-light animate-pulse" />}
+                    {engine.label}
+                  </span>
+                  <span className="text-[10px] text-brand-muted">{engine.desc}</span>
                 </button>
               );
             })}
